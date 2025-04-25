@@ -21,6 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
+# Expose port
+EXPOSE 8000
+
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
