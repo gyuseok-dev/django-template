@@ -8,15 +8,22 @@ ENV PYTHONUNBUFFERED 1
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies and uv
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Add uv to PATH
+ENV PATH="/root/.cargo/bin:$PATH"
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install Python dependencies using uv
+RUN uv sync --frozen --no-dev
 
 # Copy project
 COPY . .
@@ -25,7 +32,7 @@ COPY . .
 EXPOSE 8000
 
 # Collect static files
-RUN python manage.py collectstatic --noinput
+RUN uv run python manage.py collectstatic --noinput
 
 # Run the application
-CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000"] 
+CMD ["uv", "run", "gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000"] 
