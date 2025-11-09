@@ -37,6 +37,7 @@ ALLOWED_HOSTS = ['*']  # For development only
 # Application definition
 
 INSTALLED_APPS = [
+    'core',  # 공통 BaseModel 및 유틸리티
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
