@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # The test runner on the host needs python and test dependencies
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        uv-version: latest
+        python-version: '3.11'
+
+    - name: Install test dependencies
+      run: uv sync --dev
+
+    - name: Cache pre-commit hooks
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+    - name: Run pre-commit checks
+      run: uv run pre-commit run --all-files
+
+    # Create .env file for docker-compose
+    - name: Create .env file
+      run: |
+        echo "SECRET_KEY=a-test-secret-key-for-ci" > .env
+        echo "DEBUG=1" >> .env
+        echo "ALLOWED_HOSTS=localhost,127.0.0.1,web" >> .env
+        echo "CSRF_TRUSTED_ORIGINS=http://localhost:8000" >> .env
+        echo "DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres" >> .env
+        echo "POSTGRES_DB=postgres" >> .env
+        echo "POSTGRES_USER=postgres" >> .env
+        echo "POSTGRES_PASSWORD=postgres" >> .env
+
+    - name: Start services
+      run: docker compose up -d --build
+
+    - name: Wait for server to be ready
+      run: |
+        echo "Waiting for server to start..."
+        # Wait for port 8000 to be accessible
+        timeout 30 bash -c 'until echo > /dev/tcp/localhost/8000; do sleep 1; done'
+        echo "Server is up!"
+
+    - name: Show container logs
+      run: docker compose logs
+
+    - name: Get Playwright version
+      id: playwright-version
+      run: |
+        PLAYWRIGHT_VERSION=$(uv run python -c "import playwright; print(playwright.__version__)")
+        echo "version=$PLAYWRIGHT_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      id: playwright-cache
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+    - name: Install Playwright browsers
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      run: uv run playwright install --with-deps chromium
+
+    - name: Install Playwright system dependencies
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      run: uv run playwright install-deps chromium
+
+    - name: Run Playwright tests
+      run: uv run pytest 
