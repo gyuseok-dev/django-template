@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # The test runner on the host needs python and test dependencies
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v4  # @v1 대신 @v4 권장 (최신 액션 버전)
+      with:
+        uv-version: "0.5.4"      # <--- 버전을 명시적으로 지정하세요!
+        python-version: '3.11'
+
+    - name: Install test dependencies
+      run: uv sync --group dev
+
+    # Create .env file for docker-compose
+    - name: Create .env file
+      run: |
+        echo "SECRET_KEY=a-test-secret-key-for-ci" > .env
+        echo "DEBUG=1" >> .env
+        echo "ALLOWED_HOSTS=localhost,127.0.0.1,web" >> .env
+        echo "CSRF_TRUSTED_ORIGINS=http://localhost:8000" >> .env
+        echo "DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres" >> .env
+        echo "POSTGRES_DB=postgres" >> .env
+        echo "POSTGRES_USER=postgres" >> .env
+        echo "POSTGRES_PASSWORD=postgres" >> .env
+    - name: Start services
+      run: docker compose up -d --build
+
+    - name: Wait for server to be ready
+      run: |
+        echo "Waiting for server to start..."
+        # Wait for port 8000 to be accessible
+        timeout 30 bash -c 'until echo > /dev/tcp/localhost/8000; do sleep 1; done'
+        echo "Server is up!"
+    - name: Show container logs
+      run: docker compose logs
+
+    - name: Install Playwright browsers
+      run: uv run playwright install --with-deps chromium
+
+    - name: Run Playwright tests
+      run: uv run pytest

@@ -1,0 +1,31 @@
+<div>
+    <canvas id="barChart_{{ component.instance.uid }}" height="{{ height }}"></canvas>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('barChart_{{ component.instance.uid }}').getContext('2d');
+        const data = {{ data|safe }};
+        const options = {{ options|safe }};
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                ...options,
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                }
+            }
+        });
+    });
+</script>

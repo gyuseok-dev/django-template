@@ -1,0 +1,56 @@
+# Elastic Beanstalk에서 배포 시 제외할 파일들
+
+# Git
+.git
+.gitignore
+
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Database
+*.sqlite3
+db.sqlite3
+
+# Django
+staticfiles/
+media/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Terraform
+terraform/
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Environment
+.env
+.env.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+*.md
+!README.md
+
+# Claude
+.claude/
+
+# Mac
+.DS_Store
+
+# Platform hooks (using .ebextensions instead)
+.platform/

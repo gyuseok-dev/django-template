@@ -1,0 +1,63 @@
+name: "Infra"
+
+on:
+  push:
+    branches: [ '**' ]
+    paths:
+      - 'terraform/**'  # terraform 폴더 안의 파일이 바뀔 때만 실행
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'terraform/**'
+
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: ubuntu-latest
+
+    # terraform 폴더에서 명령어를 실행하도록 설정
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1. Terraform 설치
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # 2. AWS 인증 (Secrets 사용)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 3. 환경 구분 (브랜치에 따라 dev/prod workspace 선택)
+      - name: Set Environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "TF_WORKSPACE=prod" >> $GITHUB_ENV
+          else
+            echo "TF_WORKSPACE=dev" >> $GITHUB_ENV
+          fi
+
+      # 4. Terraform 초기화
+      - name: Terraform Init
+        run: terraform init
+
+      # 5. Plan (변경 사항 미리보기 - PR일 때만 수행)
+      - name: Terraform Plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -var-file="${{ env.TF_WORKSPACE }}.tfvars"
+
+      # 6. Apply (실제 반영 - Push일 때만 수행)
+      - name: Terraform Apply
+        if: github.event_name == 'push'
+        run: terraform apply -auto-approve -var-file="${{ env.TF_WORKSPACE }}.tfvars"

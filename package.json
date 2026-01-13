@@ -1,0 +1,13 @@
+{
+  "name": "hospital-erp",
+  "version": "1.0.0",
+  "description": "Hospital ERP Tailwind CSS",
+  "scripts": {
+    "tailwind:build": "npx @tailwindcss/cli -i app/styles.css -o app/static/css/styles.css --minify",
+    "tailwind:watch": "npx @tailwindcss/cli -i app/styles.css -o app/static/css/styles.css --watch"
+  },
+  "dependencies": {
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/cli": "^4.0.0"
+  }
+}

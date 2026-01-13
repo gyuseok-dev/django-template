@@ -1,0 +1,139 @@
+@import url("https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard-dynamic-subset.css");
+
+@import "tailwindcss";
+
+:root {
+  --font-pretendard: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR",
+    "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    sans-serif;
+}
+
+@theme {
+  --font-pretendard: var(--font-pretendard);
+
+  /* [Color] */
+  /* Primary */
+  --color-primary-gray: #3d424d;
+  --color-primary-dark: #0d2e6e;
+  --color-primary-mid: #536db1;
+  --color-primary-focus: #9bade3;
+  --color-primary-dim: #e3eaf7;
+  --color-primary-white: #f4f6ff;
+
+  /* Secondary */
+  --color-secondary-mid: #a9755f;
+  --color-secondary-dim: #d2b7ac;
+  --color-secondary-focus: #a9755f;
+
+  /* Tertiary */
+  --color-tertiary-dark: #1d9380;
+  --color-tertiary-mid: #65dbc7;
+
+  /* Highlight */
+  --color-highlight: #ea2f61;
+  --color-highlight-focus: #ff5959;
+  --color-highlight-mid: #ff9059;
+  --color-highlight-low: #ffb459;
+  --color-highlight-dim: #ffddb4;
+
+  /* Neutral */
+  --color-neutral-150: #808080;
+  --color-neutral-200: #a8a8a8;
+  --color-neutral-300: #d9d9d9;
+  --color-neutral-400: #f6f6f6;
+  --color-neutral-white: #ffffff;
+  --color-neutral-black: #000000;
+
+  /* Text Styles */
+  --text-headline-1: 24px;
+  --text-headline-1--line-height: 1.2;
+  --text-headline-1--letter-spacing: -0.02em;
+  --text-headline-1--font-weight: 600;
+  --text-subheadline-1: 20px;
+  --text-subheadline-1--line-height: 1.2;
+  --text-subheadline-1--font-weight: 500;
+  --text-title-1: 48px;
+  --text-title-1--line-height: 1.2;
+  --text-title-1--letter-spacing: -0.02em;
+  --text-title-1--font-weight: 700;
+  --text-subtitle-1: 18px;
+  --text-subtitle-1--line-height: 1.4;
+  --text-subtitle-1--font-weight: 600;
+  --text-subtitle-strong: 32px;
+  --text-subtitle-strong--line-height: 1.2;
+  --text-subtitle-strong--font-weight: 700;
+  --text-subtitle-2: 16px;
+  --text-subtitle-2--line-height: 1.4;
+  --text-subtitle-2--font-weight: 600;
+  --text-subtitle-3: 16px;
+  --text-subtitle-3--line-height: 1.4;
+  --text-subtitle-3--font-weight: 500;
+  --text-body-strong-16: 16px;
+  --text-body-strong-16--line-height: 1.4;
+  --text-body-strong-16--font-weight: 600;
+  --text-body-strong-16-single: 16px;
+  --text-body-strong-16-single--line-height: 1.2;
+  --text-body-strong-16-single--font-weight: 600;
+  --text-body-1: 16px;
+  --text-body-1--line-height: 1.4;
+  --text-body-1--font-weight: 600;
+  --text-body-2: 16px;
+  --text-body-2--line-height: 1.4;
+  --text-body-2--font-weight: 500;
+  --text-body-3: 16px;
+  --text-body-3--line-height: 1.4;
+  --text-body-3--font-weight: 400;
+  --text-body-14-regular: 14px;
+  --text-body-14-regular--line-height: 1.4;
+  --text-body-14-regular--font-weight: 400;
+  --text-body-14-regular-single: 14px;
+  --text-body-14-regular-single--line-height: 1;
+  --text-body-14-regular-single--font-weight: 400;
+  --text-body-14-strong: 14px;
+  --text-body-14-strong--line-height: 1.4;
+  --text-body-14-strong--font-weight: 600;
+  --text-body-14-strong-single: 14px;
+  --text-body-14-strong-single--line-height: 1;
+  --text-body-14-strong-single--font-weight: 600;
+  --text-body-12-medium: 12px;
+  --text-body-12-medium--line-height: 1.4;
+  --text-body-12-medium--font-weight: 500;
+  --text-body-12-medium-single: 12px;
+  --text-body-12-medium-single--line-height: 1;
+  --text-body-12-medium-single--font-weight: 500;
+  --text-body-10-strong: 10px;
+  --text-body-10-strong--line-height: 1.4;
+  --text-body-10-strong--font-weight: 600;
+  --text-caption-1: 12px;
+  --text-caption-1--line-height: 1.4;
+  --text-caption-1--font-weight: 500;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  #main>*:first-child {
+    /* Tailwind의 배경색 설정을 직접 주입 */
+    background-color: var(--color-primary-white) !important;
+  }
+
+  #nav-sidebar-inner {
+    background-color: var(--color-primary-dim) !important;
+  }
+}
+
+html,
+body,
+#storybook-root,
+.sbdocs,
+.sbdocs-wrapper,
+.docs-story {
+  font-family: var(--font-pretendard);
+}

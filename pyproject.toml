@@ -12,8 +12,105 @@ dependencies = [
     "python-dotenv==1.0.1",
     "gunicorn==21.2.0",
     "whitenoise==6.9.0",
+    "pandas>=2.3.3",
+    "openpyxl>=3.1.5",
+    "django-import-export>=4.3.13",
+    "django-unfold>=0.69.0",
+    "django-extensions>=3.2.3",
+    "django-crispy-forms>=2.5",
+    "django-debug-toolbar>=4.2.0",
+    "pydot>=4.0.1",
+    "sentry-sdk[django]>=2.48.0",
+    "playwright>=1.57.0",
+    "pytest-playwright>=0.7.2",
+    "dotenv>=0.9.9",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=5.2.8",
+    "mypy>=1.19.1",
+    "ruff>=0.14.7",
+    "types-python-dateutil>=2.9.0.20251115",
+    "pytest",
+    "pytest-playwright",
+    "pre-commit>=4.0.0",
+    "debugpy>=1.8.0",
 ]
 
 [tool.uv]
-dev-dependencies = []
 package = false
+
+[tool.ruff]
+# 한 줄 최대 길이
+line-length = 120
+
+# Python 버전
+target-version = "py311"
+
+# 제외할 디렉토리/파일
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "migrations",
+    "*.pyc",
+    ".elasticbeanstalk",
+]
+
+[tool.ruff.lint]
+# 활성화할 규칙
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "DJ",  # flake8-django
+]
+
+# 무시할 규칙
+ignore = [
+    "E501",  # line too long
+    "B008",  # function calls in argument defaults
+]
+
+# 파일별로 무시할 규칙
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"settings.py" = ["E402"]
+"**/migrations/*.py" = ["E501", "F401"]
+
+[tool.ruff.lint.isort]
+# Django 프로젝트용 import 정렬
+known-first-party = ["record", "hospital_erp"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.format]
+# 포매팅 설정
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+# Python 버전
+python_version = "3.11"
+
+# 기본 설정
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # 모든 함수에 타입 힌트 강제 (false로 시작)
+check_untyped_defs = true
+ignore_missing_imports = true
+
+# Django 설정
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "app.settings"
+
+# 특정 모듈 무시
+[[tool.mypy.overrides]]
+module = "*.migrations.*"
+ignore_errors = true

@@ -1,0 +1,90 @@
+{% load icon_tags %}
+<!-- 날짜 범위 필터 컴포넌트 -->
+<div class="inline-flex items-center gap-2 px-2 py-2 rounded-lg bg-neutral-400">
+  <!-- 시작 월 선택 입력 -->
+  <div class="relative flex items-center gap-2">
+    <label class="text-sm font-semibold text-gray-700">시작</label>
+    <input type="month" id="startMonthSelect" class="px-3 py-1 text-sm font-semiboldb border-1 border-neutral-300 rounded-lg cursor-pointer bg-neutral-white" style="color-scheme: light;" />
+  </div>
+
+  <!-- 구분선 -->
+  <span class="text-gray-600">~</span>
+
+  <!-- 끝 월 선택 입력 -->
+  <div class="relative flex items-center gap-2">
+    <label class="text-sm font-semibold text-gray-700">종료</label>
+    <input type="month" id="endMonthSelect" class="px-3 py-1 text-sm font-semiboldb border-1 border-neutral-300 rounded-lg cursor-pointer bg-neutral-white" style="color-scheme: light;" />
+  </div>
+
+  <!-- 이번달 버튼 (초기화) -->
+  <button id="resetBtn" class="flex items-center gap-1 text-sm text-neutral-200 hover:text-neutral-200 font-semiboldb">
+    {% icon 'reset' css_class='w-4 h-4 text-neutral-200' %}
+    <span>초기화</span>
+  </button>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const startMonthSelect = document.getElementById('startMonthSelect')
+    const endMonthSelect = document.getElementById('endMonthSelect')
+    const resetBtn = document.getElementById('resetBtn')
+
+    // URL에서 파라미터 가져오기
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlStartYear = urlParams.get('start_year')
+    const urlStartMonth = urlParams.get('start_month')
+    const urlEndYear = urlParams.get('end_year')
+    const urlEndMonth = urlParams.get('end_month')
+
+    // 현재 날짜 또는 URL 파라미터로 초기화
+    const today = new Date()
+    const currentYear = today.getFullYear()
+    const currentMonth = today.getMonth() + 1
+
+    // 기본값: 최근 12개월 (12개월 전 ~ 현재 월)
+    const startDate = new Date(currentYear, currentMonth - 1 - 11, 1)
+    const defaultStartYear = startDate.getFullYear()
+    const defaultStartMonth = startDate.getMonth() + 1
+
+    let startYear = urlStartYear ? parseInt(urlStartYear) : defaultStartYear
+    let startMonth = urlStartMonth ? parseInt(urlStartMonth) : defaultStartMonth
+    let endYear = urlEndYear ? parseInt(urlEndYear) : currentYear
+    let endMonth = urlEndMonth ? parseInt(urlEndMonth) : currentMonth
+
+    const startYearMonth = `${startYear}-${String(startMonth).padStart(2, '0')}`
+    const endYearMonth = `${endYear}-${String(endMonth).padStart(2, '0')}`
+
+    startMonthSelect.value = startYearMonth
+    endMonthSelect.value = endYearMonth
+
+    // 날짜 범위 적용 함수
+    function applyDateRange() {
+      const startValue = startMonthSelect.value
+      const endValue = endMonthSelect.value
+
+      if (startValue && endValue) {
+        const [sYear, sMonth] = startValue.split('-')
+        const [eYear, eMonth] = endValue.split('-')
+
+        // 시작일이 종료일보다 늦으면 경고
+        if (new Date(sYear, sMonth - 1) > new Date(eYear, eMonth - 1)) {
+          alert('시작 월이 종료 월보다 늦을 수 없습니다.')
+          return
+        }
+
+        window.location.href = `?start_year=${sYear}&start_month=${sMonth}&end_year=${eYear}&end_month=${eMonth}`
+      }
+    }
+
+    // 시작 월 변경 시 자동 조회
+    startMonthSelect.addEventListener('change', applyDateRange)
+
+    // 종료 월 변경 시 자동 조회
+    endMonthSelect.addEventListener('change', applyDateRange)
+
+    // 초기화 버튼
+    resetBtn.addEventListener('click', function () {
+      window.location.href = window.location.pathname
+    })
+  })
+</script>
