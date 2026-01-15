@@ -312,8 +312,9 @@ class ManualRecordForm(forms.ModelForm):
         def save_room_records():
             """RoomRecord 저장 함수"""
             # 해당 병원의 활성화된 Room만 저장
-            if instance.hospital:
-                active_rooms = Room.objects.filter(hospital=instance.hospital, is_active=True)
+            # hospital_id로 직접 필터링 (새로 생성 시 hospital 객체가 캐시되지 않을 수 있음)
+            if instance.hospital_id:
+                active_rooms = Room.objects.filter(hospital_id=instance.hospital_id, is_active=True)
             else:
                 active_rooms = Room.objects.none()
 

@@ -58,10 +58,9 @@ class RoomRecordFactory(DjangoModelFactory[RoomRecord]):
     class Meta:
         model = RoomRecord
 
-    hospital: ClassVar[Any] = factory.SelfAttribute("manual_record.hospital")
     manual_record: ClassVar[Any] = factory.SubFactory(ManualRecordFactory)
     room: ClassVar[Any] = factory.SubFactory(
-        RoomFactory, hospital=factory.SelfAttribute("..hospital")
+        RoomFactory, hospital=factory.SelfAttribute("..manual_record.hospital")
     )
 
     # 통계 데이터

@@ -10,8 +10,22 @@ from .models import (
     ManualRecord,
     MonthlyStatistics,
     PatientRecord,
+    RoomRecord,
     VisitChannelRecord,
 )
+
+
+@receiver(post_save, sender=RoomRecord)
+def update_manual_record_total_revenue(
+    sender, instance: RoomRecord, created, **_kwargs
+):
+    """RoomRecord 저장 시 ManualRecord의 total_revenue 업데이트"""
+    manual_record = instance.manual_record
+    if manual_record:
+        new_total = manual_record.calculate_total_revenue()
+        if manual_record.total_revenue != new_total:
+            manual_record.total_revenue = new_total
+            manual_record.save(update_fields=["total_revenue"])
 
 
 @receiver(post_save, sender=ManualRecord)
