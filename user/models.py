@@ -15,7 +15,10 @@ class User(AbstractUser):
 
     # 병원 관계 추가 (N:M)
     hospitals = models.ManyToManyField(
-        "hospital.Hospital", related_name="users", blank=True, verbose_name="소속 병원"
+        "hospital.Hospital",
+        related_name="users",
+        blank=True,
+        verbose_name="소속 병원",
     )
 
     class Meta:

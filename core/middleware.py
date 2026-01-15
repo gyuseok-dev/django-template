@@ -30,20 +30,28 @@ class TenantMiddleware:
                     # 슈퍼유저 또는 대표: 연결된 병원이 없으면 첫 번째 병원 자동 선택
                     from hospital.models import Hospital
 
+                    selected_hospital: Hospital | None = None
                     if request.user.hospitals.exists():
-                        hospital = request.user.hospitals.first()
+                        selected_hospital = request.user.hospitals.first()
                     else:
-                        hospital = Hospital.objects.filter(is_active=True).first()
+                        selected_hospital = Hospital.objects.filter(
+                            is_active=True
+                        ).first()
 
-                    if hospital:
-                        request.session["selected_hospital_id"] = hospital.id
-                        set_current_hospital(hospital)
+                    if selected_hospital:
+                        request.session["selected_hospital_id"] = (
+                            selected_hospital.id
+                        )
+                        set_current_hospital(selected_hospital)
                 else:
                     # 관리자 또는 일반 사용자: 첫 번째 병원 자동 선택 & 세션에 저장
                     if request.user.hospitals.exists():
-                        hospital = request.user.hospitals.first()
-                        request.session["selected_hospital_id"] = hospital.id
-                        set_current_hospital(hospital)
+                        user_hospital = request.user.hospitals.first()
+                        if user_hospital:
+                            request.session["selected_hospital_id"] = (
+                                user_hospital.id
+                            )
+                            set_current_hospital(user_hospital)
 
         response = self.get_response(request)
 

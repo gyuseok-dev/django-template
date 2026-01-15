@@ -19,8 +19,9 @@ RUN pip install uv
 # Copy dependency file
 COPY pyproject.toml /code/
 
-# Install Python dependencies
+# Install Python dependencies (including test dependencies)
 RUN uv pip install --system -r pyproject.toml
+RUN uv pip install --system factory-boy pytest-django pytest-cov faker
 
 # Copy project files
 COPY . /code

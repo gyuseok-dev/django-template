@@ -20,10 +20,14 @@ def hospital_context(request):
     # 사용 가능한 병원 목록
     if request.user.can_access_all_hospitals():
         # 슈퍼유저 또는 대표: 모든 활성 병원
-        available_hospitals = Hospital.objects.filter(is_active=True).order_by("name")
+        available_hospitals = Hospital.objects.filter(is_active=True).order_by(
+            "name"
+        )
     else:
         # 일반 사용자: 연결된 병원만
-        available_hospitals = request.user.hospitals.filter(is_active=True).order_by("name")
+        available_hospitals = request.user.hospitals.filter(
+            is_active=True
+        ).order_by("name")
 
     return {
         "selected_hospital": selected_hospital,

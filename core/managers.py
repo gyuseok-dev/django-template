@@ -79,11 +79,17 @@ class SoftDeleteTenantManager(models.Manager):
 
     def for_hospital(self, hospital):
         """특정 병원 데이터 조회 (관리자용)"""
-        return TenantQuerySet(self.model, using=self._db).filter(deleted_at__isnull=True).filter(hospital=hospital)
+        return (
+            TenantQuerySet(self.model, using=self._db)
+            .filter(deleted_at__isnull=True)
+            .filter(hospital=hospital)
+        )
 
     def all_hospitals(self):
         """모든 병원 데이터 조회 (슈퍼유저용, soft delete만 필터링)"""
-        return TenantQuerySet(self.model, using=self._db).filter(deleted_at__isnull=True)
+        return TenantQuerySet(self.model, using=self._db).filter(
+            deleted_at__isnull=True
+        )
 
     def with_deleted(self):
         """삭제된 데이터를 포함한 전체 데이터 조회"""
@@ -96,7 +102,9 @@ class SoftDeleteTenantManager(models.Manager):
     def deleted_only(self):
         """삭제된 데이터만 조회"""
         hospital = get_current_hospital()
-        qs = TenantQuerySet(self.model, using=self._db).filter(deleted_at__isnull=False)
+        qs = TenantQuerySet(self.model, using=self._db).filter(
+            deleted_at__isnull=False
+        )
         if hospital:
             return qs.filter(hospital=hospital)
         return qs

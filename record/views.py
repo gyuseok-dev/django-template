@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
+from django.db.models.functions import TruncMonth
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -19,10 +20,14 @@ def dashboard_callback(request, context):
     today = timezone.now()
 
     # 당월 데이터
-    current_month_records = PatientRecord.objects.filter(visit_at__year=today.year, visit_at__month=today.month)
+    current_month_records = PatientRecord.objects.filter(
+        visit_at__year=today.year, visit_at__month=today.month
+    )
 
     # 당월 진료일 수 (데이터가 있는 날짜만 카운트)
-    current_working_days = current_month_records.values("visit_at__date").distinct().count()
+    current_working_days = (
+        current_month_records.values("visit_at__date").distinct().count()
+    )
 
     # 당월 통계
     current_new_count = current_month_records.filter(
@@ -31,37 +36,76 @@ def dashboard_callback(request, context):
     current_revisit_count = current_month_records.filter(
         Q(visit_type__icontains="재진") | Q(visit_type__icontains="재")
     ).count()
-    current_ninety_count = current_month_records.filter(Q(visit_type__icontains="90")).count()
+    current_ninety_count = current_month_records.filter(
+        Q(visit_type__icontains="90")
+    ).count()
     current_total = current_month_records.count()
 
     # 당월 일 평균
-    current_avg_new = round(current_new_count / current_working_days, 1) if current_working_days > 0 else 0
-    current_avg_revisit = round(current_revisit_count / current_working_days, 1) if current_working_days > 0 else 0
-    current_avg_ninety = round(current_ninety_count / current_working_days, 1) if current_working_days > 0 else 0
-    current_avg_total = round(current_total / current_working_days, 1) if current_working_days > 0 else 0
+    current_avg_new = (
+        round(current_new_count / current_working_days, 1)
+        if current_working_days > 0
+        else 0
+    )
+    current_avg_revisit = (
+        round(current_revisit_count / current_working_days, 1)
+        if current_working_days > 0
+        else 0
+    )
+    current_avg_ninety = (
+        round(current_ninety_count / current_working_days, 1)
+        if current_working_days > 0
+        else 0
+    )
+    current_avg_total = (
+        round(current_total / current_working_days, 1)
+        if current_working_days > 0
+        else 0
+    )
 
     # 전월 데이터
     prev_month_date = today - relativedelta(months=1)
     prev_month_records = PatientRecord.objects.filter(
-        visit_at__year=prev_month_date.year, visit_at__month=prev_month_date.month
+        visit_at__year=prev_month_date.year,
+        visit_at__month=prev_month_date.month,
     )
 
     # 전월 진료일 수
-    prev_working_days = prev_month_records.values("visit_at__date").distinct().count()
+    prev_working_days = (
+        prev_month_records.values("visit_at__date").distinct().count()
+    )
 
     # 전월 통계
-    prev_new_count = prev_month_records.filter(Q(visit_type__icontains="신환") | Q(visit_type__icontains="신")).count()
+    prev_new_count = prev_month_records.filter(
+        Q(visit_type__icontains="신환") | Q(visit_type__icontains="신")
+    ).count()
     prev_revisit_count = prev_month_records.filter(
         Q(visit_type__icontains="재진") | Q(visit_type__icontains="재")
     ).count()
-    prev_ninety_count = prev_month_records.filter(Q(visit_type__icontains="90")).count()
+    prev_ninety_count = prev_month_records.filter(
+        Q(visit_type__icontains="90")
+    ).count()
     prev_total = prev_month_records.count()
 
     # 전월 일 평균
-    prev_avg_new = round(prev_new_count / prev_working_days, 1) if prev_working_days > 0 else 0
-    prev_avg_revisit = round(prev_revisit_count / prev_working_days, 1) if prev_working_days > 0 else 0
-    prev_avg_ninety = round(prev_ninety_count / prev_working_days, 1) if prev_working_days > 0 else 0
-    prev_avg_total = round(prev_total / prev_working_days, 1) if prev_working_days > 0 else 0
+    prev_avg_new = (
+        round(prev_new_count / prev_working_days, 1)
+        if prev_working_days > 0
+        else 0
+    )
+    prev_avg_revisit = (
+        round(prev_revisit_count / prev_working_days, 1)
+        if prev_working_days > 0
+        else 0
+    )
+    prev_avg_ninety = (
+        round(prev_ninety_count / prev_working_days, 1)
+        if prev_working_days > 0
+        else 0
+    )
+    prev_avg_total = (
+        round(prev_total / prev_working_days, 1) if prev_working_days > 0 else 0
+    )
 
     # 테이블 데이터 구성
     table_data = {
@@ -88,7 +132,9 @@ def dashboard_callback(request, context):
 
     for i in range(5, -1, -1):  # 6개월 전부터 현재까지
         month_date = today - relativedelta(months=i)
-        month_records = PatientRecord.objects.filter(visit_at__year=month_date.year, visit_at__month=month_date.month)
+        month_records = PatientRecord.objects.filter(
+            visit_at__year=month_date.year, visit_at__month=month_date.month
+        )
         count = month_records.count()
 
         labels.append(month_date.strftime("%Y년 %m월"))
@@ -112,11 +158,19 @@ def dashboard_callback(request, context):
     avg_payment_per_patient = 50000
 
     current_total_revenue = current_total * avg_payment_per_patient
-    current_avg_daily_revenue = round(current_total_revenue / current_working_days) if current_working_days > 0 else 0
+    current_avg_daily_revenue = (
+        round(current_total_revenue / current_working_days)
+        if current_working_days > 0
+        else 0
+    )
 
     # 진료과별 매출 통계 (상위 5개)
     room_stats = []
-    room_data = current_month_records.values("room").annotate(patient_count=Count("id")).order_by("-patient_count")[:5]
+    room_data = (
+        current_month_records.values("room")
+        .annotate(patient_count=Count("id"))
+        .order_by("-patient_count")[:5]
+    )
 
     for item in room_data:
         room_revenue = item["patient_count"] * avg_payment_per_patient
@@ -130,7 +184,14 @@ def dashboard_callback(request, context):
 
     room_revenue_table_data = {
         "headers": ["진료실", "환자수", "예상매출"],
-        "rows": [[item["room"], f"{item['patient_count']}명", f"{item['revenue']:,}원"] for item in room_stats],
+        "rows": [
+            [
+                item["room"],
+                f"{item['patient_count']}명",
+                f"{item['revenue']:,}원",
+            ]
+            for item in room_stats
+        ],
     }
 
     # 총계
@@ -154,7 +215,9 @@ def dashboard_callback(request, context):
     # 일별 매출 데이터 계산 (캘린더용)
     daily_revenue = {}
     daily_stats = (
-        current_month_records.values("visit_at__date").annotate(patient_count=Count("id")).order_by("visit_at__date")
+        current_month_records.values("visit_at__date")
+        .annotate(patient_count=Count("id"))
+        .order_by("visit_at__date")
     )
 
     for item in daily_stats:
@@ -213,35 +276,70 @@ def patient_records_dashboard(request):
     previous_month = previous_month_date.strftime("%Y-%m")
 
     # 당월 데이터
-    current_month_data = PatientRecord.objects.filter(treatment_year_month=current_month)
+    current_month_data = PatientRecord.objects.filter(
+        visit_at__year=today.year, visit_at__month=today.month
+    )
 
     # 전월 데이터
-    previous_month_data = PatientRecord.objects.filter(treatment_year_month=previous_month)
+    previous_month_data = PatientRecord.objects.filter(
+        visit_at__year=previous_month_date.year,
+        visit_at__month=previous_month_date.month,
+    )
 
     # 당월 통계 (신환/재진 구분)
     current_new_patients = current_month_data.filter(visit_type="초진").count()
-    current_return_patients = current_month_data.filter(visit_type="재진").count()
+    current_return_patients = current_month_data.filter(
+        visit_type="재진"
+    ).count()
     current_total = current_month_data.count()
-    current_total_payment = current_month_data.aggregate(total=Sum("payment_amount"))["total"] or 0
+    current_total_payment = (
+        current_month_data.aggregate(total=Sum("payment_amount"))["total"] or 0
+    )
 
     # 전월 통계
-    previous_new_patients = previous_month_data.filter(visit_type="초진").count()
-    previous_return_patients = previous_month_data.filter(visit_type="재진").count()
+    previous_new_patients = previous_month_data.filter(
+        visit_type="초진"
+    ).count()
+    previous_return_patients = previous_month_data.filter(
+        visit_type="재진"
+    ).count()
     previous_total = previous_month_data.count()
-    previous_total_payment = previous_month_data.aggregate(total=Sum("payment_amount"))["total"] or 0
+    previous_total_payment = (
+        previous_month_data.aggregate(total=Sum("payment_amount"))["total"] or 0
+    )
 
     # 당월 일 평균 계산 (현재까지의 날짜로 계산)
     current_day = today.day
-    current_avg_new = round(current_new_patients / current_day, 1) if current_day > 0 else 0
-    current_avg_return = round(current_return_patients / current_day, 1) if current_day > 0 else 0
-    current_avg_total = round(current_total / current_day, 1) if current_day > 0 else 0
+    current_avg_new = (
+        round(current_new_patients / current_day, 1) if current_day > 0 else 0
+    )
+    current_avg_return = (
+        round(current_return_patients / current_day, 1)
+        if current_day > 0
+        else 0
+    )
+    current_avg_total = (
+        round(current_total / current_day, 1) if current_day > 0 else 0
+    )
 
     # 전월 일 평균 계산 (전월의 총 일수로 계산)
-    previous_month_days = (previous_month_date.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+    previous_month_days = (
+        previous_month_date.replace(day=28) + timedelta(days=4)
+    ).replace(day=1) - timedelta(days=1)
     previous_days = previous_month_days.day
-    previous_avg_new = round(previous_new_patients / previous_days, 1) if previous_days > 0 else 0
-    previous_avg_return = round(previous_return_patients / previous_days, 1) if previous_days > 0 else 0
-    previous_avg_total = round(previous_total / previous_days, 1) if previous_days > 0 else 0
+    previous_avg_new = (
+        round(previous_new_patients / previous_days, 1)
+        if previous_days > 0
+        else 0
+    )
+    previous_avg_return = (
+        round(previous_return_patients / previous_days, 1)
+        if previous_days > 0
+        else 0
+    )
+    previous_avg_total = (
+        round(previous_total / previous_days, 1) if previous_days > 0 else 0
+    )
 
     # 진료과별 통계 (당월)
     department_stats = (
@@ -290,14 +388,15 @@ def patient_monthly_stats_api(request):
 
     # 최근 6개월 데이터
     monthly_data = (
-        PatientRecord.objects.values("treatment_year_month")
+        PatientRecord.objects.annotate(month=TruncMonth("visit_at"))
+        .values("month")
         .annotate(
             total_count=Count("id"),
             new_count=Count("id", filter=Q(visit_type="초진")),
             return_count=Count("id", filter=Q(visit_type="재진")),
             total_payment=Sum("payment_amount"),
         )
-        .order_by("treatment_year_month")
+        .order_by("month")
     )
 
     # 데이터 포맷팅
@@ -308,7 +407,7 @@ def patient_monthly_stats_api(request):
     total_payments = []
 
     for item in monthly_data:
-        labels.append(item["treatment_year_month"])
+        labels.append(item["month"].strftime("%Y-%m") if item["month"] else "")
         total_patients.append(item["total_count"])
         new_patients.append(item["new_count"])
         return_patients.append(item["return_count"])
@@ -330,7 +429,7 @@ def patient_department_stats_api(request):
     """환자 진료 기록 진료과별 통계 API"""
 
     department_data = (
-        PatientRecord.objects.values("department")
+        PatientRecord.objects.values("room")
         .annotate(
             total_count=Count("id"),
             new_count=Count("id", filter=Q(visit_type="초진")),
@@ -381,8 +480,12 @@ def monthly_comparison_api(request):
         month = int(month)
 
     # 당월 데이터
-    current_month_records = PatientRecord.objects.filter(visit_at__year=year, visit_at__month=month)
-    current_working_days = current_month_records.values("visit_at__date").distinct().count()
+    current_month_records = PatientRecord.objects.filter(
+        visit_at__year=year, visit_at__month=month
+    )
+    current_working_days = (
+        current_month_records.values("visit_at__date").distinct().count()
+    )
 
     # 일매출 평균
 
@@ -392,29 +495,64 @@ def monthly_comparison_api(request):
     current_revisit_count = current_month_records.filter(
         Q(visit_type__icontains="재진") | Q(visit_type__icontains="재")
     ).count()
-    current_ninety_count = current_month_records.filter(Q(visit_type__icontains="90")).count()
+    current_ninety_count = current_month_records.filter(
+        Q(visit_type__icontains="90")
+    ).count()
 
-    current_avg_new = round(current_new_count / current_working_days, 1) if current_working_days > 0 else 0
-    current_avg_revisit = round(current_revisit_count / current_working_days, 1) if current_working_days > 0 else 0
-    current_avg_ninety = round(current_ninety_count / current_working_days, 1) if current_working_days > 0 else 0
-    current_avg_total = round(current_avg_new + current_avg_revisit + current_avg_ninety, 1)
+    current_avg_new = (
+        round(current_new_count / current_working_days, 1)
+        if current_working_days > 0
+        else 0
+    )
+    current_avg_revisit = (
+        round(current_revisit_count / current_working_days, 1)
+        if current_working_days > 0
+        else 0
+    )
+    current_avg_ninety = (
+        round(current_ninety_count / current_working_days, 1)
+        if current_working_days > 0
+        else 0
+    )
+    current_avg_total = round(
+        current_avg_new + current_avg_revisit + current_avg_ninety, 1
+    )
 
     # 전월 데이터
     current_date = datetime(year, month, 1)
     prev_month_date = current_date - relativedelta(months=1)
     prev_month_records = PatientRecord.objects.filter(
-        visit_at__year=prev_month_date.year, visit_at__month=prev_month_date.month
+        visit_at__year=prev_month_date.year,
+        visit_at__month=prev_month_date.month,
     )
-    prev_working_days = prev_month_records.values("visit_at__date").distinct().count()
-    prev_new_count = prev_month_records.filter(Q(visit_type__icontains="신환") | Q(visit_type__icontains="신")).count()
+    prev_working_days = (
+        prev_month_records.values("visit_at__date").distinct().count()
+    )
+    prev_new_count = prev_month_records.filter(
+        Q(visit_type__icontains="신환") | Q(visit_type__icontains="신")
+    ).count()
     prev_revisit_count = prev_month_records.filter(
         Q(visit_type__icontains="재진") | Q(visit_type__icontains="재")
     ).count()
-    prev_ninety_count = prev_month_records.filter(Q(visit_type__icontains="90")).count()
+    prev_ninety_count = prev_month_records.filter(
+        Q(visit_type__icontains="90")
+    ).count()
 
-    prev_avg_new = round(prev_new_count / prev_working_days, 1) if prev_working_days > 0 else 0
-    prev_avg_revisit = round(prev_revisit_count / prev_working_days, 1) if prev_working_days > 0 else 0
-    prev_avg_ninety = round(prev_ninety_count / prev_working_days, 1) if prev_working_days > 0 else 0
+    prev_avg_new = (
+        round(prev_new_count / prev_working_days, 1)
+        if prev_working_days > 0
+        else 0
+    )
+    prev_avg_revisit = (
+        round(prev_revisit_count / prev_working_days, 1)
+        if prev_working_days > 0
+        else 0
+    )
+    prev_avg_ninety = (
+        round(prev_ninety_count / prev_working_days, 1)
+        if prev_working_days > 0
+        else 0
+    )
     prev_avg_total = round(prev_avg_new + prev_avg_revisit + prev_avg_ninety, 1)
 
     data = {
@@ -430,6 +568,11 @@ def monthly_comparison_api(request):
             "90일초진": prev_avg_ninety,
             "총합": prev_avg_total,
         },
-        "daily_sales": {"curr": 100, "prev": 100, "curr_cnt": 18, "prev_cnt": 23},
+        "daily_sales": {
+            "curr": 100,
+            "prev": 100,
+            "curr_cnt": 18,
+            "prev_cnt": 23,
+        },
     }
     return JsonResponse(data)

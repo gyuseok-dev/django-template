@@ -5,11 +5,11 @@ from record.models import GlobalStatistics
 # ============================================
 
 
-class Dashboard1(GlobalStatistics):
+class Calendar(GlobalStatistics):
     class Meta:
         proxy = True
-        verbose_name = "병원 현황(일평균)"
-        verbose_name_plural = "병원 현황(일평균)"
+        verbose_name = "업무일지 작성 현황"
+        verbose_name_plural = "업무일지 작성 현황"
 
 
 class Graph(GlobalStatistics):

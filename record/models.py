@@ -41,7 +41,11 @@ class ManualRecord(BaseModel):
     )
 
     # 총매출 (자동 계산되어 저장됨)
-    total_revenue = models.IntegerField(default=0, verbose_name="총매출", help_text="총진료비 - 미수발생 + 미수입금")
+    total_revenue = models.IntegerField(
+        default=0,
+        verbose_name="총매출",
+        help_text="총진료비 - 미수발생 + 미수입금",
+    )
 
     class Meta:
         verbose_name = "마감일지"
@@ -100,7 +104,13 @@ class ManualRecord(BaseModel):
     @property
     def total_jinryobi(self):
         """총진료비 = 급여 + 비급여 + 조합청구액 + 100/100미만 총액 + 장애인기금/전액본인"""
-        return self.급여 + self.비급여 + self.조합청구액 + self.단위절사 + self.전액본인
+        return (
+            self.급여
+            + self.비급여
+            + self.조합청구액
+            + self.단위절사
+            + self.전액본인
+        )
 
     def calculate_total_revenue(self):
         """총매출 계산 = 총진료비 - 미수발생 금액 + 미수입금 금액"""
@@ -121,10 +131,18 @@ class RoomRecord(BaseModel):
     )
 
     manual_record = models.ForeignKey(
-        ManualRecord, on_delete=models.CASCADE, related_name="room_records", verbose_name="마감일지"
+        ManualRecord,
+        on_delete=models.CASCADE,
+        related_name="room_records",
+        verbose_name="마감일지",
     )
 
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="records", verbose_name="진료실")
+    room = models.ForeignKey(
+        Room,
+        on_delete=models.CASCADE,
+        related_name="records",
+        verbose_name="진료실",
+    )
 
     급여 = models.IntegerField(default=0, verbose_name="급여")
 
@@ -132,7 +150,9 @@ class RoomRecord(BaseModel):
     비급여 = models.IntegerField(default=0, verbose_name="비급여")
     조합청구액 = models.IntegerField(default=0, verbose_name="조합청구액")
     단위절사 = models.IntegerField(default=0, verbose_name="100/100미만 총액")
-    전액본인 = models.IntegerField(default=0, verbose_name="장애인기금/전액본인")
+    전액본인 = models.IntegerField(
+        default=0, verbose_name="장애인기금/전액본인"
+    )
 
     # 미수 관련
     미수_발생금액 = models.IntegerField(default=0, verbose_name="미수발생 금액")
@@ -175,18 +195,41 @@ class PatientRecord(BaseModel):
 
     chart_number = models.IntegerField(verbose_name="차트번호", db_index=True)
     # 기본 정보
-    visit_at = models.DateTimeField(max_length=7, verbose_name="내원일", help_text="YYYY-MM 형식", db_index=True)
+    visit_at = models.DateTimeField(
+        max_length=7,
+        verbose_name="내원일",
+        help_text="YYYY-MM 형식",
+        db_index=True,
+    )
 
-    visit_type = models.CharField(max_length=20, verbose_name="초재", blank=True, help_text="신환/재진/90일초진 등")
+    visit_type = models.CharField(
+        max_length=20,
+        verbose_name="초재",
+        blank=True,
+        help_text="신환/재진/90일초진 등",
+    )
 
     patient_name = models.CharField(max_length=100, verbose_name="수진자명")
-    patient_id = models.CharField(max_length=50, verbose_name="주민번호", blank=True, help_text="주민등록번호")
+    patient_id = models.CharField(
+        max_length=50,
+        verbose_name="주민번호",
+        blank=True,
+        help_text="주민등록번호",
+    )
 
     # 보험 및 진료 정보
-    insurance_type = models.TextField(verbose_name="보험유형", blank=True, help_text="예: 국민건강보험, 보호1종  등")
-    room = models.CharField(max_length=100, verbose_name="진료실", db_index=True)
+    insurance_type = models.TextField(
+        verbose_name="보험유형",
+        blank=True,
+        help_text="예: 국민건강보험, 보호1종  등",
+    )
+    room = models.CharField(
+        max_length=100, verbose_name="진료실", db_index=True
+    )
 
-    doctor_name = models.CharField(max_length=100, verbose_name="담당의", blank=True, db_index=True)
+    doctor_name = models.CharField(
+        max_length=100, verbose_name="담당의", blank=True, db_index=True
+    )
 
     class Meta:
         verbose_name = "환자 진료 기록"
@@ -244,21 +287,41 @@ class VisitChannelRecord(BaseModel):
         blank=True,
     )
 
-    channel = models.TextField(verbose_name="내원경로", help_text="예: 인터넷, 간판, 소개")
+    channel = models.TextField(
+        verbose_name="내원경로", help_text="예: 인터넷, 간판, 소개"
+    )
 
     chart_number = models.IntegerField(verbose_name="차트번호", db_index=True)
     # 기본 정보
-    visit_at = models.DateTimeField(max_length=7, verbose_name="내원일", help_text="YYYY-MM 형식", db_index=True)
+    visit_at = models.DateTimeField(
+        max_length=7,
+        verbose_name="내원일",
+        help_text="YYYY-MM 형식",
+        db_index=True,
+    )
 
-    visit_type = models.CharField(max_length=20, verbose_name="초재", blank=True, help_text="신환/재진/90일초진 등")
+    visit_type = models.CharField(
+        max_length=20,
+        verbose_name="초재",
+        blank=True,
+        help_text="신환/재진/90일초진 등",
+    )
 
     patient_name = models.CharField(max_length=100, verbose_name="수진자명")
 
     # 보험 및 진료 정보
-    insurance_type = models.TextField(verbose_name="보험유형", blank=True, help_text="예: 국민건강보험, 보호1종  등")
-    room = models.CharField(max_length=100, verbose_name="진료실", db_index=True)
+    insurance_type = models.TextField(
+        verbose_name="보험유형",
+        blank=True,
+        help_text="예: 국민건강보험, 보호1종  등",
+    )
+    room = models.CharField(
+        max_length=100, verbose_name="진료실", db_index=True
+    )
 
-    doctor_name = models.CharField(max_length=100, verbose_name="담당의", blank=True, db_index=True)
+    doctor_name = models.CharField(
+        max_length=100, verbose_name="담당의", blank=True, db_index=True
+    )
 
     class Meta:
         verbose_name = "내원 경로"
@@ -306,21 +369,34 @@ class DailyStatistics(BaseModel):
     )
 
     manual_record = models.OneToOneField(
-        ManualRecord, on_delete=models.DO_NOTHING, related_name="daily_stats", verbose_name="마감일지"
+        ManualRecord,
+        on_delete=models.DO_NOTHING,
+        related_name="daily_stats",
+        verbose_name="마감일지",
     )
 
     # 매출 통계
-    total_revenue = models.IntegerField(default=0, verbose_name="총매출", db_index=True)
+    total_revenue = models.IntegerField(
+        default=0, verbose_name="총매출", db_index=True
+    )
 
     # 환자 통계
     new_patient_count = models.IntegerField(default=0, verbose_name="신환 수")
-    revisit_patient_count = models.IntegerField(default=0, verbose_name="재진 수")
-    ninety_day_patient_count = models.IntegerField(default=0, verbose_name="90일초진 수")
-    total_patient_count = models.IntegerField(default=0, verbose_name="총 환자 수")
+    revisit_patient_count = models.IntegerField(
+        default=0, verbose_name="재진 수"
+    )
+    ninety_day_patient_count = models.IntegerField(
+        default=0, verbose_name="90일초진 수"
+    )
+    total_patient_count = models.IntegerField(
+        default=0, verbose_name="총 환자 수"
+    )
 
     # 내원 경로별 통계 (JSON 필드)
     channel_counts = models.JSONField(
-        default=dict, verbose_name="내원경로별 건수", help_text='{"인터넷": 10, "간판": 20, ...}'
+        default=dict,
+        verbose_name="내원경로별 건수",
+        help_text='{"인터넷": 10, "간판": 20, ...}',
     )
 
     class Meta:
@@ -358,21 +434,35 @@ class MonthlyStatistics(BaseModel):
 
     # 매출 통계
     total_revenue = models.BigIntegerField(default=0, verbose_name="총매출")
-    avg_daily_revenue = models.IntegerField(default=0, verbose_name="일평균 매출")
+    avg_daily_revenue = models.IntegerField(
+        default=0, verbose_name="일평균 매출"
+    )
 
     # 환자 통계 (총합 + 일평균)
     total_new_patients = models.IntegerField(default=0, verbose_name="총 신환")
-    total_revisit_patients = models.IntegerField(default=0, verbose_name="총 재진")
-    total_ninety_patients = models.IntegerField(default=0, verbose_name="총 90일초진")
+    total_revisit_patients = models.IntegerField(
+        default=0, verbose_name="총 재진"
+    )
+    total_ninety_patients = models.IntegerField(
+        default=0, verbose_name="총 90일초진"
+    )
     total_patients = models.IntegerField(default=0, verbose_name="총 환자")
 
     avg_new_patients = models.FloatField(default=0, verbose_name="일평균 신환")
-    avg_revisit_patients = models.FloatField(default=0, verbose_name="일평균 재진")
-    avg_ninety_patients = models.FloatField(default=0, verbose_name="일평균 90일초진")
-    avg_total_patients = models.FloatField(default=0, verbose_name="일평균 총환자")
+    avg_revisit_patients = models.FloatField(
+        default=0, verbose_name="일평균 재진"
+    )
+    avg_ninety_patients = models.FloatField(
+        default=0, verbose_name="일평균 90일초진"
+    )
+    avg_total_patients = models.FloatField(
+        default=0, verbose_name="일평균 총환자"
+    )
 
     # 내원 경로별 통계
-    channel_counts = models.JSONField(default=dict, verbose_name="내원경로별 건수")
+    channel_counts = models.JSONField(
+        default=dict, verbose_name="내원경로별 건수"
+    )
 
     # 건당 진료비
     fee_per_case = models.IntegerField(default=0, verbose_name="건당 진료비")
@@ -420,9 +510,15 @@ class GlobalStatistics(BaseModel):
         help_text="예: max_daily_revenue, min_daily_revenue 등",
     )
 
-    value = models.JSONField(default=dict, verbose_name="통계 값", help_text="JSON 형태로 유연하게 저장")
+    value = models.JSONField(
+        default=dict,
+        verbose_name="통계 값",
+        help_text="JSON 형태로 유연하게 저장",
+    )
 
-    description = models.TextField(blank=True, verbose_name="설명", help_text="이 통계의 의미")
+    description = models.TextField(
+        blank=True, verbose_name="설명", help_text="이 통계의 의미"
+    )
 
     class Meta:
         verbose_name = "병원별 통계"
@@ -447,7 +543,13 @@ class GlobalStatistics(BaseModel):
     def set_value(cls, key, value, description="", hospital=None):
         """특정 키의 값을 설정"""
         if hospital:
-            obj, created = cls.objects.update_or_create(key=key, hospital=hospital, defaults={"value": value, "description": description})
+            obj, created = cls.objects.update_or_create(
+                key=key,
+                hospital=hospital,
+                defaults={"value": value, "description": description},
+            )
         else:
-            obj, created = cls.objects.update_or_create(key=key, defaults={"value": value, "description": description})
+            obj, created = cls.objects.update_or_create(
+                key=key, defaults={"value": value, "description": description}
+            )
         return obj

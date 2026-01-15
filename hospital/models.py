@@ -7,11 +7,15 @@ class Hospital(BaseModel):
     """병원 모델 - 멀티테넌시의 핵심"""
 
     name = models.CharField(max_length=200, unique=True, verbose_name="병원명")
-    code = models.CharField(max_length=50, unique=True, verbose_name="병원 코드", db_index=True)
+    code = models.CharField(
+        max_length=50, unique=True, verbose_name="병원 코드", db_index=True
+    )
 
     # 병원 정보
     address = models.TextField(blank=True, verbose_name="주소")
-    phone = models.CharField(max_length=20, blank=True, verbose_name="대표 전화")
+    phone = models.CharField(
+        max_length=20, blank=True, verbose_name="대표 전화"
+    )
 
     is_active = models.BooleanField(default=True, verbose_name="활성화")
 
@@ -37,13 +41,19 @@ class Room(BaseModel):
         db_index=True,
     )
 
-    name = models.CharField(max_length=100, verbose_name="진료실명", db_index=True)
-
-    is_active = models.BooleanField(
-        default=True, verbose_name="활성화", help_text="비활성화 시 급여 입력에서 제외됩니다"
+    name = models.CharField(
+        max_length=100, verbose_name="진료실명", db_index=True
     )
 
-    order = models.IntegerField(default=0, verbose_name="정렬 순서", help_text="탭에 표시될 순서")
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="활성화",
+        help_text="비활성화 시 급여 입력에서 제외됩니다",
+    )
+
+    order = models.IntegerField(
+        default=0, verbose_name="정렬 순서", help_text="탭에 표시될 순서"
+    )
 
     class Meta:
         verbose_name = "진료실"

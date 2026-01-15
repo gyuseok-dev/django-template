@@ -69,10 +69,14 @@ class ManualRecordForm(forms.ModelForm):
         for room in active_rooms:
             # 기존 RoomRecord 가져오기
             room_record = None
-            if self.instance.pk:
+            if self.instance.pk is not None:
+                from .models import RoomRecord
+
                 try:
-                    room_record = self.instance.room_records.get(room=room)
-                except self.instance.room_records.model.DoesNotExist:
+                    room_record = RoomRecord.objects.get(
+                        manual_record=self.instance, room=room
+                    )
+                except RoomRecord.DoesNotExist:
                     pass
 
             # 각 필드 생성
@@ -87,7 +91,9 @@ class ManualRecordForm(forms.ModelForm):
 
                 # 기존 값이 있으면 초기값 설정
                 if room_record:
-                    self.fields[field_name].initial = getattr(room_record, field_key, 0)
+                    self.fields[field_name].initial = getattr(
+                        room_record, field_key, 0
+                    )
 
         self.helper = FormHelper()
         self.helper.form_method = "post"
@@ -99,7 +105,11 @@ class ManualRecordForm(forms.ModelForm):
             # 탭 버튼 생성
             tab_buttons = ['<div class="flex gap-2 mb-4 border-b">']
             for idx, room in enumerate(active_rooms):
-                active_class = "bg-blue-500 text-white" if idx == 0 else "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                active_class = (
+                    "bg-blue-500 text-white"
+                    if idx == 0
+                    else "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                )
                 tab_buttons.append(f"""
                     <button type="button"
                             class="room-tab px-4 py-2 rounded-t-lg transition-colors {active_class}"
@@ -160,7 +170,11 @@ class ManualRecordForm(forms.ModelForm):
                 </script>
             """
 
-            room_payment_section = [HTML("".join(tab_buttons)), *tab_panes, HTML(tab_script)]
+            room_payment_section = [
+                HTML("".join(tab_buttons)),
+                *tab_panes,
+                HTML(tab_script),
+            ]
         else:
             room_payment_section = [HTML("<p>등록된 진료실이 없습니다.</p>")]
 
@@ -194,15 +208,25 @@ class ManualRecordForm(forms.ModelForm):
         )
 
         # 기존 인스턴스가 있는 경우 연동된 데이터 표시
-        if self.instance.pk:
-            patient_count = self.instance.patient_records.count()
-            visit_count = self.instance.visit_channel_records.count()
+        if self.instance.pk is not None:
+            from .models import PatientRecord, VisitChannelRecord
+
+            patient_count = PatientRecord.objects.filter(
+                manual_record=self.instance
+            ).count()
+            visit_count = VisitChannelRecord.objects.filter(
+                manual_record=self.instance
+            ).count()
 
             self.helper.layout.append(
                 Fieldset(
                     "연동된 데이터",
-                    HTML(f'<div class="mb-3"><strong>환자 진료 기록 수:</strong> {patient_count:,}건</div>'),
-                    HTML(f'<div class="mb-3"><strong>내원 경로 기록 수:</strong> {visit_count:,}건</div>'),
+                    HTML(
+                        f'<div class="mb-3"><strong>환자 진료 기록 수:</strong> {patient_count:,}건</div>'
+                    ),
+                    HTML(
+                        f'<div class="mb-3"><strong>내원 경로 기록 수:</strong> {visit_count:,}건</div>'
+                    ),
                     css_class="mb-4",
                 ),
             )
@@ -235,13 +259,17 @@ class ManualRecordForm(forms.ModelForm):
             raise forms.ValidationError("병원을 선택해주세요.")
 
         # 기존 레코드 수정 시에는 자기 자신을 제외
-        queryset = ManualRecord.objects.filter(date=date_value, hospital=hospital)
+        queryset = ManualRecord.objects.filter(
+            date=date_value, hospital=hospital
+        )
         if self.instance.pk:
             queryset = queryset.exclude(pk=self.instance.pk)
 
         # 삭제되지 않은 레코드 중 중복이 있는지 확인
         if queryset.exists():
-            raise forms.ValidationError(f"{hospital.name}의 {date_value} 날짜의 마감일지가 이미 존재합니다.")
+            raise forms.ValidationError(
+                f"{hospital.name}의 {date_value} 날짜의 마감일지가 이미 존재합니다."
+            )
 
         return cleaned_data
 
@@ -252,7 +280,11 @@ class ManualRecordForm(forms.ModelForm):
         instance = super().save(commit=False)
 
         # disabled 필드는 cleaned_data에 포함되지 않으므로 명시적으로 설정
-        if not instance.hospital_id and hasattr(self, "_hospital_id") and self._hospital_id:
+        if (
+            not instance.hospital_id
+            and hasattr(self, "_hospital_id")
+            and self._hospital_id
+        ):
             instance.hospital_id = self._hospital_id
 
         # commit=True일 때만 여기서 저장
@@ -286,9 +318,13 @@ class ManualRecordForm(forms.ModelForm):
 
                 # RoomRecord 생성 또는 업데이트
                 try:
-                    RoomRecord.objects.update_or_create(manual_record=instance, room=room, defaults=defaults)
+                    RoomRecord.objects.update_or_create(
+                        manual_record=instance, room=room, defaults=defaults
+                    )
                 except Exception as e:
-                    print(f"RoomRecord 저장 실패 - Room: {room.name}, Error: {e}")
+                    print(
+                        f"RoomRecord 저장 실패 - Room: {room.name}, Error: {e}"
+                    )
                     raise
 
         if commit:

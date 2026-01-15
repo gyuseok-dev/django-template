@@ -36,6 +36,12 @@ dev = [
     "pytest-playwright",
     "pre-commit>=4.0.0",
     "debugpy>=1.8.0",
+    "factory-boy>=3.3.3",
+    "faker>=40.1.2",
+    "pytest-django>=4.11.1",
+    "openpyxl>=3.1.5",
+    "pytest-cov>=7.0.0",
+    "types-factory-boy>=0.4.1",
 ]
 
 [tool.uv]
@@ -43,7 +49,7 @@ package = false
 
 [tool.ruff]
 # 한 줄 최대 길이
-line-length = 120
+line-length = 80
 
 # Python 버전
 target-version = "py311"
@@ -104,6 +110,11 @@ disallow_untyped_defs = false  # 모든 함수에 타입 힌트 강제 (false로
 check_untyped_defs = true
 ignore_missing_imports = true
 
+# Any 타입 금지 설정
+disallow_any_explicit = true      # 명시적 Any 사용 금지
+disallow_any_generics = true      # 제네릭 타입 미지정 금지 (list -> list[str])
+disallow_subclassing_any = true   # Any를 상속하는 클래스 금지
+
 # Django 설정
 plugins = ["mypy_django_plugin.main"]
 
@@ -114,3 +125,31 @@ django_settings_module = "app.settings"
 [[tool.mypy.overrides]]
 module = "*.migrations.*"
 ignore_errors = true
+
+# Factory 파일은 Any 사용 허용 (factory_boy 특성상 필요)
+[[tool.mypy.overrides]]
+module = "*.tests.factories"
+disallow_any_explicit = false
+
+# 외부 라이브러리 타입 스텁 없는 모듈 (subclassing_any 허용)
+[[tool.mypy.overrides]]
+module = ["*.admin"]
+disallow_subclassing_any = false
+disallow_any_generics = false
+
+# Django 제네릭 타입 (Manager, QuerySet 등) 미지정 허용
+[[tool.mypy.overrides]]
+module = ["core.models", "core.managers", "record.forms"]
+disallow_any_generics = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "app.settings"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+testpaths = ["record/tests", "hospital/tests", "user/tests", "dashboard/tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]

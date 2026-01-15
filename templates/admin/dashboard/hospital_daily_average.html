@@ -3,7 +3,10 @@
 
 {% block content %}
 <div class="p-10 max-w-7xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">오픈 정형외과 일평균 요약</h1>
+    <!-- 헤더 타이틀 -->
+    <div class="mb-6">
+        {% include "admin/components/navi_header_title.html" with title="오픈 정형외과 일평균 요약" %}
+    </div>
 
     <!-- 날짜 필터 -->
     <div class="mb-6">

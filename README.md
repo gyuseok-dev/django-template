@@ -175,19 +175,38 @@ Waiting for client to attach...
 
 ## 테스트
 
-프로젝트는 Playwright를 사용한 E2E 테스트를 포함합니다.
+프로젝트는 pytest를 사용한 유닛 테스트와 Playwright를 사용한 E2E 테스트를 포함합니다.
 
-### 로컬 환경에서 테스트 실행
+### 유닛 테스트 (PostgreSQL 연동)
+
+테스트 전용 PostgreSQL 컨테이너를 사용하여 실제 DB 환경에서 테스트할 수 있습니다.
+
+```bash
+# 테스트용 DB 컨테이너 실행 (포트 5433)
+docker compose -f docker-compose.test.yml up -d
+
+# 유닛 테스트 실행
+DEBUG=1 uv run pytest record/tests/ -v
+
+# 테스트 완료 후 컨테이너 정리
+docker compose -f docker-compose.test.yml down
+```
+
+테스트용 DB는 개발 DB와 분리되어 있습니다:
+- 개발 DB: `localhost:5432` (docker-compose.yml)
+- 테스트 DB: `localhost:5433` (docker-compose.test.yml)
+
+### E2E 테스트 (Playwright)
 
 ```bash
 # Playwright 브라우저 설치 (최초 1회)
 uv run playwright install --with-deps chromium
 
 # 개발 서버가 실행 중인 상태에서 테스트 실행
-uv run pytest
+uv run pytest tests/ -v
 ```
 
-### Docker 환경에서 테스트 실행
+### Docker 환경에서 E2E 테스트 실행
 
 ```bash
 # Docker Compose로 서비스 시작
@@ -195,7 +214,7 @@ docker compose up -d
 
 # 테스트 실행 (호스트에서)
 uv run playwright install --with-deps chromium
-uv run pytest
+uv run pytest tests/ -v
 ```
 
 ### CI/CD

@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static unfold %}
+
+{% block content %}
+<div class="p-6">
+    <!-- 헤더 타이틀 -->
+    <div class="mb-6">
+        {% include "admin/components/navi_header_title.html" with title="업무일지 작성 현황" %}
+    </div>
+
+    <!-- 현재 월 표시 -->
+    <div class="mb-6">
+        {% include "admin/components/navi_headline.html" with headline=formatted_month %}
+    </div>
+
+    <!-- 날짜 필터 -->
+    <div class="mb-6">
+        {% include "admin/components/date_filter.html" %}
+    </div>
+
+    <!-- 월별 통계 테이블 -->
+    <div class="mb-6">
+        {% component 'unfold/components/card.html'%}
+        {% component 'unfold/components/table.html' with table=revenue_table_data card_included=1 striped=1 %}
+        {% endcomponent %}
+        {% endcomponent %}
+    </div>
+
+    <div class="p-6">
+        <!-- 헤더 타이틀 -->
+        <div class="mb-6">
+            {% include "admin/components/navi_header_title.html" with title="달력보기" %}
+        </div>
+
+        {% include "admin/components/calendar.html" with daily_data=daily_data year=current_year month=current_month %}
+    </div>
+</div>
+{% endblock %}

@@ -54,7 +54,9 @@ try:
 except Exception:
     pass
 
-CSRF_TRUSTED_ORIGINS = environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:8000").split(",")
+CSRF_TRUSTED_ORIGINS = environ.get(
+    "CSRF_TRUSTED_ORIGINS", "http://localhost:8000"
+).split(",")
 
 
 ######################################################################
@@ -139,7 +141,9 @@ WSGI_APPLICATION = "app.wsgi.application"
 
 
 # PostgreSQL만 사용하도록 설정
-DATABASE_URL = environ.get("DATABASE_URL", "postgresql://postgres:postgres@db:5432/postgres")
+DATABASE_URL = environ.get(
+    "DATABASE_URL", "postgresql://postgres:postgres@db:5432/postgres"
+)
 db_url = urlparse(DATABASE_URL)
 
 DATABASES = {
@@ -188,7 +192,16 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "app" / "static"]
 STATIC_ROOT = BASE_DIR / "static"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# DEBUG 모드에서는 기본 스토리지, 프로덕션에서는 whitenoise manifest 스토리지 사용
+if DEBUG:
+    STATICFILES_STORAGE = (
+        "django.contrib.staticfiles.storage.StaticFilesStorage"
+    )
+else:
+    STATICFILES_STORAGE = (
+        "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    )
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -206,6 +219,7 @@ AUTH_USER_MODEL = "user.User"
 UNFOLD = {
     "SITE_TITLE": "병원 ERP",
     "SITE_HEADER": "병원 ERP",
+    "SHOW_HISTORY": False,
     "STYLES": [
         lambda request: static("css/styles.css"),
     ],
@@ -233,22 +247,37 @@ UNFOLD = {
                     {
                         "title": _("최고매출"),
                         "icon": "dashboard",
-                        "link": reverse_lazy("admin:dashboard_bestrevenue_changelist"),
+                        "link": reverse_lazy(
+                            "admin:dashboard_bestrevenue_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("업무일지"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy(
+                            "admin:dashboard_calendar_changelist"
+                        ),
                     },
                     {
                         "title": _("병원 현황(일평균)"),
                         "icon": "dashboard",
-                        "link": reverse_lazy("admin:dashboard_evaluate_changelist"),
+                        "link": reverse_lazy(
+                            "admin:dashboard_evaluate_changelist"
+                        ),
                     },
                     {
                         "title": _("그래프 현황"),
                         "icon": "dashboard",
-                        "link": reverse_lazy("admin:dashboard_graph_changelist"),
+                        "link": reverse_lazy(
+                            "admin:dashboard_graph_changelist"
+                        ),
                     },
                     {
                         "title": _("마감일지"),
                         "icon": "settings",
-                        "link": reverse_lazy("admin:record_manualrecord_changelist"),
+                        "link": reverse_lazy(
+                            "admin:record_manualrecord_changelist"
+                        ),
                     },
                 ],
             },
@@ -259,7 +288,9 @@ UNFOLD = {
                     {
                         "title": _("병원"),
                         "icon": "local_hospital",
-                        "link": reverse_lazy("admin:hospital_hospital_changelist"),
+                        "link": reverse_lazy(
+                            "admin:hospital_hospital_changelist"
+                        ),
                         "permission": lambda request: request.user.is_superuser,
                     },
                     {
@@ -295,13 +326,17 @@ UNFOLD = {
                     {
                         "title": _("진료기록"),
                         "icon": "account_circle",
-                        "link": reverse_lazy("admin:record_patientrecord_changelist"),
+                        "link": reverse_lazy(
+                            "admin:record_patientrecord_changelist"
+                        ),
                         "permission": lambda request: request.user.is_superuser,
                     },
                     {
                         "title": _("내원경로"),
                         "icon": "group",
-                        "link": reverse_lazy("admin:record_visitchannelrecord_changelist"),
+                        "link": reverse_lazy(
+                            "admin:record_visitchannelrecord_changelist"
+                        ),
                         "permission": lambda request: request.user.is_superuser,
                     },
                 ],

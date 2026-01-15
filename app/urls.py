@@ -30,7 +30,12 @@ urlpatterns = [
     # Core views
     path("core/", include("core.urls")),
     # Admin 커스텀 뷰 (admin/ 앞에 위치해야 함)
-    path("admin/", RedirectView.as_view(url="/admin/dashboard/bestrevenue/", permanent=False)),
+    path(
+        "admin/",
+        RedirectView.as_view(
+            url="/admin/dashboard/bestrevenue/", permanent=False
+        ),
+    ),
     path("admin/", admin.site.urls),
     path("record/", include("record.urls")),
 ]

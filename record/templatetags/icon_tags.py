@@ -25,7 +25,9 @@ def icon(name, css_class="", **kwargs):
         icon_name = name
 
     # 파일 경로
-    icon_path = os.path.join(settings.BASE_DIR, "app", "static", "icons", f"{icon_name}.svg")
+    icon_path = os.path.join(
+        settings.BASE_DIR, "app", "static", "icons", f"{icon_name}.svg"
+    )
 
     try:
         with open(icon_path) as f:
@@ -34,7 +36,9 @@ def icon(name, css_class="", **kwargs):
         # fill을 currentColor로 변경 (Tailwind 색상 클래스 적용 가능하게)
         import re
 
-        svg_content = re.sub(r'fill="[^"]*"', 'fill="currentColor"', svg_content)
+        svg_content = re.sub(
+            r'fill="[^"]*"', 'fill="currentColor"', svg_content
+        )
 
         # CSS 클래스와 추가 속성 처리
         attrs = []
@@ -46,7 +50,9 @@ def icon(name, css_class="", **kwargs):
 
         # svg 태그에 속성 추가
         if attrs:
-            svg_content = svg_content.replace("<svg ", f'<svg {" ".join(attrs)} ', 1)
+            svg_content = svg_content.replace(
+                "<svg ", f'<svg {" ".join(attrs)} ', 1
+            )
 
         return mark_safe(svg_content)
     except FileNotFoundError:

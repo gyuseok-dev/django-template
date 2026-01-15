@@ -3,7 +3,11 @@ from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from unfold.admin import ModelAdmin
-from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from unfold.forms import (
+    AdminPasswordChangeForm,
+    UserChangeForm,
+    UserCreationForm,
+)
 
 from .models import User
 
@@ -28,14 +32,18 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         "date_joined",
     ]
 
-    list_filter = BaseUserAdmin.list_filter + ("name",)
+    list_filter = list(BaseUserAdmin.list_filter) + ["name"]
     search_fields = ("username", "name", "phone", "email")
 
     # 상세 페이지 필드셋 (비밀번호 암호화 자동 적용)
-    fieldsets = BaseUserAdmin.fieldsets + (("추가 정보", {"fields": ("name", "phone")}),)
+    fieldsets = list(BaseUserAdmin.fieldsets or []) + [
+        ("추가 정보", {"fields": ("name", "phone")})
+    ]
 
     # 사용자 추가 페이지
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (("추가 정보", {"fields": ("name", "phone")}),)
+    add_fieldsets = list(BaseUserAdmin.add_fieldsets or []) + [
+        ("추가 정보", {"fields": ("name", "phone")})
+    ]
 
     # 슈퍼유저만 접근 가능
     def has_module_permission(self, request):
