@@ -7,7 +7,7 @@ class User(AbstractUser):
     커스텀 User 모델
     """
 
-    name = models.CharField(max_length=150, blank=True, default="")
+    name = models.CharField(max_length=150, blank=True, default="", verbose_name="이름")
     phone = models.CharField(max_length=15, blank=True, default="")
 
     # is_staff 기본값을 True로 설정 (모든 사용자가 Admin 접근 가능)
