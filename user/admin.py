@@ -37,13 +37,18 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
     # 상세 페이지 필드셋 (비밀번호 암호화 자동 적용)
     fieldsets = list(BaseUserAdmin.fieldsets or []) + [
-        ("추가 정보", {"fields": ("name", "phone")})
+        ("추가 정보", {"fields": ("name", "phone")}),
+        ("소속 병원", {"fields": ("hospitals",)}),
     ]
 
     # 사용자 추가 페이지
     add_fieldsets = list(BaseUserAdmin.add_fieldsets or []) + [
-        ("추가 정보", {"fields": ("name", "phone")})
+        ("추가 정보", {"fields": ("name", "phone")}),
+        ("소속 병원", {"fields": ("hospitals",)}),
     ]
+
+    # M2M 필드 UI 개선
+    filter_horizontal = ("hospitals",)
 
     # 슈퍼유저만 접근 가능
     def has_module_permission(self, request):
