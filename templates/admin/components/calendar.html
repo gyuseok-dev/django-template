@@ -1,0 +1,296 @@
+<!-- Calendar Grid -->
+<!-- Day Headers -->
+<div class="grid grid-cols-8 gap-2 mb-2 border-b border-gray-300">
+    <div class="font-semibold py-4 px-3 text-gray-600">일</div>
+    <div class="font-semibold py-4 px-3 text-gray-600">월</div>
+    <div class="font-semibold py-4 px-3 text-gray-600">화</div>
+    <div class="font-semibold py-4 px-3 text-gray-600">수</div>
+    <div class="font-semibold py-4 px-3 text-gray-600">목</div>
+    <div class="font-semibold py-4 px-3 text-gray-600">금</div>
+    <div class="font-semibold py-4 px-3 text-gray-600">토</div>
+    <div class="font-semibold py-4 px-3 text-gray-600 bg-gray-100">주합계</div>
+</div>
+
+<!-- Calendar Days -->
+<div id="calendarDays" class="grid grid-cols-8 gap-2"></div>
+
+<!-- Day Average (요일별 평균) -->
+<div id="dayAverage" class="grid grid-cols-8 gap-2 mt-4 pt-4 border-t border-gray-300"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 컴포넌트에 전달된 데이터 사용
+        const dailyRevenueData = {{ daily_data|safe }};
+        const prevMonthData = {{ prev_month_data|safe }};
+        const prevMonthInfo = {{ prev_month_info|safe }};
+        const nextMonthData = {{ next_month_data|safe }};
+        const nextMonthInfo = {{ next_month_info|safe }};
+        const currentYear = {{ year }};
+        const currentMonth = {{ month }};
+
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // ISO 8601 기준 주차 계산
+        function getWeekNumber(date) {
+            const target = new Date(date.valueOf());
+            const dayNum = (date.getDay() + 6) % 7; // 월요일=0, 일요일=6
+            target.setDate(target.getDate() - dayNum + 3);
+            const firstThursday = target.valueOf();
+            target.setMonth(0, 1);
+            if (target.getDay() !== 4) {
+                target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+            }
+            return 1 + Math.ceil((firstThursday - target) / 604800000);
+        }
+
+        // weekTotal 초기화
+        function createEmptyWeekTotal() {
+            return {
+                patient_count: 0,
+                fee_per_case: 0,
+                revenue: 0,
+                new_count: 0,
+                ninety_count: 0,
+                revisit_count: 0,
+                no_billing_count: 0
+            };
+        }
+
+        // weekTotal에 데이터 추가
+        function addToWeekTotal(weekTotal, data) {
+            weekTotal.patient_count += data.patient_count || 0;
+            weekTotal.fee_per_case += data.fee_per_case || 0;
+            weekTotal.revenue += data.revenue || 0;
+            weekTotal.new_count += data.new_count || 0;
+            weekTotal.ninety_count += data.ninety_count || 0;
+            weekTotal.revisit_count += data.revisit_count || 0;
+            weekTotal.no_billing_count += data.no_billing_count || 0;
+        }
+
+        // 날짜 셀 내용 생성
+        function createDayCellContent(displayText, data, linkClass = 'text-neutral-200') {
+            if (!data) {
+                return `<div class="font-bold mb-2 text-base">${displayText}</div>`;
+            }
+            const totalPatients = data.patient_count || 0;
+            const manualRecordUrl = data.manual_record_id
+                ? `/admin/record/manualrecord/${data.manual_record_id}/change/`
+                : '#';
+            return `
+                <div class="font-bold mb-2 text-base flex items-center justify-between">
+                    <span>${displayText}</span>
+                    <a href="${manualRecordUrl}" class="text-xs font-medium ${linkClass} underline" onclick="event.stopPropagation();">업무일지</a>
+                </div>
+                <div class="text-xs leading-relaxed text-left space-y-0.5">
+                    <div>인원: ${totalPatients}명</div>
+                    <div>건진: ${formatNumber(data.fee_per_case || 0)}원</div>
+                    <div>매출: ${formatNumber(data.revenue || 0)}원</div>
+                    <div class="border-t border-gray-300 my-1"></div>
+                    <div>신환: ${data.new_count || 0}명</div>
+                    <div>90초: ${data.ninety_count || 0}명</div>
+                    <div>재진: ${data.revisit_count || 0}명</div>
+                    <div>산정X: ${data.no_billing_count || 0}명</div>
+                </div>
+            `;
+        }
+
+        // 주합계 셀 생성
+        function createWeekTotalElement(weekNum, weekTotal) {
+            const element = document.createElement('div');
+            element.className = 'p-3 rounded-lg bg-gray-100 text-gray-700';
+            element.innerHTML = `
+                <div class="font-bold mb-2 text-base">${weekNum}주차</div>
+                <div class="text-xs leading-relaxed text-left space-y-0.5">
+                    <div>인원: ${weekTotal.patient_count}명</div>
+                    <div>건진: ${formatNumber(weekTotal.fee_per_case)}원</div>
+                    <div>매출: ${formatNumber(weekTotal.revenue)}원</div>
+                    <div class="border-t border-gray-300 my-1"></div>
+                    <div>신환: ${weekTotal.new_count}명</div>
+                    <div>90초: ${weekTotal.ninety_count}명</div>
+                    <div>재진: ${weekTotal.revisit_count}명</div>
+                    <div>산정X: ${weekTotal.no_billing_count}명</div>
+                </div>
+            `;
+            return element;
+        }
+
+        function renderCalendar() {
+            // Get first day of month and number of days
+            const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+            const today = new Date();
+
+            // Clear previous days
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+
+            // 요일별 합계를 저장할 배열 (일~토)
+            const dayOfWeekTotals = Array(7).fill(null).map(() => ({
+                patient_count: 0,
+                fee_per_case: 0,
+                revenue: 0,
+                new_count: 0,
+                ninety_count: 0,
+                revisit_count: 0,
+                no_billing_count: 0,
+                count: 0 // 평균 계산을 위한 일수
+            }));
+
+            // 주합계를 저장할 변수
+            let weekTotal = createEmptyWeekTotal();
+
+            // 이전 달 날짜 렌더링 (1일이 일요일이 아닌 경우)
+            if (firstDay > 0 && prevMonthInfo.start_day) {
+                for (let prevDay = prevMonthInfo.start_day; prevDay <= prevMonthInfo.last_day; prevDay++) {
+                    const prevDayElement = document.createElement('div');
+                    const prevDayOfWeek = (prevDay - prevMonthInfo.start_day) % 7;
+                    const isPrevSunday = prevDayOfWeek === 0;
+                    const isPrevSaturday = prevDayOfWeek === 6;
+
+                    let textColorClass = 'text-gray-400';
+                    if (isPrevSunday) textColorClass = 'text-red-300';
+                    if (isPrevSaturday) textColorClass = 'text-blue-300';
+
+                    prevDayElement.className = `p-3 rounded-lg transition-colors opacity-60 ${textColorClass}`;
+
+                    const data = prevMonthData[prevDay];
+                    if (data) {
+                        addToWeekTotal(weekTotal, data);
+                    }
+                    prevDayElement.innerHTML = createDayCellContent(`${prevMonthInfo.month}/${prevDay}`, data, 'text-neutral-300');
+                    calendarDays.appendChild(prevDayElement);
+                }
+            }
+
+            // 첫 번째 주가 토요일로 시작하지 않으면 첫 주합계 셀 위치 조정
+            let currentDayOfWeek = firstDay;
+
+            // Add days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                const isToday = today.getDate() === day &&
+                               today.getMonth() === currentMonth - 1 &&
+                               today.getFullYear() === currentYear;
+                const isSunday = currentDayOfWeek === 0;
+                const isSaturday = currentDayOfWeek === 6;
+
+                // 매출 데이터가 있는지 확인
+                const hasRevenue = dailyRevenueData[day];
+
+                let bgClass = 'hover:bg-gray-100';
+
+                let textColorClass = 'text-black';
+                if (isSunday) {
+                    textColorClass = 'text-red-500';
+                } else if (isSaturday) {
+                    textColorClass = 'text-blue-500';
+                }
+
+                dayElement.className = `p-3 rounded-lg cursor-pointer transition-colors ${bgClass} ${textColorClass}`;
+
+                // 날짜와 매출 정보 표시
+                const data = dailyRevenueData[day];
+                if (data) {
+                    // 주합계에 추가
+                    addToWeekTotal(weekTotal, data);
+
+                    // 요일별 합계에 추가
+                    addToWeekTotal(dayOfWeekTotals[currentDayOfWeek], data);
+                    dayOfWeekTotals[currentDayOfWeek].count += 1;
+                }
+                dayElement.innerHTML = createDayCellContent(`${day}일`, data);
+
+                calendarDays.appendChild(dayElement);
+
+                // 토요일이면 주합계 셀 추가
+                if (isSaturday) {
+                    const weekNum = getWeekNumber(new Date(currentYear, currentMonth - 1, day));
+                    calendarDays.appendChild(createWeekTotalElement(weekNum, weekTotal));
+
+                    // 주합계 초기화
+                    weekTotal = createEmptyWeekTotal();
+                }
+
+                // 다음 요일로 이동
+                currentDayOfWeek = (currentDayOfWeek + 1) % 7;
+            }
+
+            // 마지막 날이 토요일이 아니면 다음 달 날짜와 주합계 렌더링
+            if (currentDayOfWeek !== 0 && nextMonthInfo.end_day) {
+                for (let nextDay = 1; nextDay <= nextMonthInfo.end_day; nextDay++) {
+                    const nextDayElement = document.createElement('div');
+                    const nextDayOfWeek = currentDayOfWeek;
+                    const isNextSunday = nextDayOfWeek === 0;
+                    const isNextSaturday = nextDayOfWeek === 6;
+
+                    let textColorClass = 'text-gray-400';
+                    if (isNextSunday) textColorClass = 'text-red-300';
+                    if (isNextSaturday) textColorClass = 'text-blue-300';
+
+                    nextDayElement.className = `p-3 rounded-lg transition-colors opacity-60 ${textColorClass}`;
+
+                    const data = nextMonthData[nextDay];
+                    if (data) {
+                        addToWeekTotal(weekTotal, data);
+                    }
+                    nextDayElement.innerHTML = createDayCellContent(`${nextMonthInfo.month}/${nextDay}`, data, 'text-neutral-300');
+                    calendarDays.appendChild(nextDayElement);
+
+                    // 다음 요일로 이동
+                    currentDayOfWeek = (currentDayOfWeek + 1) % 7;
+                }
+
+                // 마지막 주합계 셀 추가
+                const lastDayOfMonth = new Date(currentYear, currentMonth, 0).getDate();
+                const weekNum = getWeekNumber(new Date(currentYear, currentMonth - 1, lastDayOfMonth));
+                calendarDays.appendChild(createWeekTotalElement(weekNum, weekTotal));
+            }
+
+            // 요일별 평균 렌더링
+            renderDayAverage(dayOfWeekTotals);
+        }
+
+        function renderDayAverage(dayOfWeekTotals) {
+            const dayAverageContainer = document.getElementById('dayAverage');
+            dayAverageContainer.innerHTML = '';
+
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+            for (let i = 0; i < 7; i++) {
+                const data = dayOfWeekTotals[i];
+                const count = data.count || 1; // 0으로 나누기 방지
+
+                const avgElement = document.createElement('div');
+                let textColorClass = 'text-gray-700';
+                if (i === 0) textColorClass = 'text-red-500';
+                if (i === 6) textColorClass = 'text-blue-500';
+
+                avgElement.className = `p-3 rounded-lg bg-gray-50 ${textColorClass}`;
+                avgElement.innerHTML = `
+                    <div class="font-bold mb-2 text-base">${dayNames[i]}</div>
+                    <div class="text-xs leading-relaxed text-left space-y-0.5 text-gray-700">
+                        <div>인원: ${Math.round(data.patient_count / count)}명</div>
+                        <div>건진: ${formatNumber(Math.round(data.fee_per_case / count))}원</div>
+                        <div>매출: ${formatNumber(Math.round(data.revenue / count))}원</div>
+                        <div class="border-t border-gray-300 my-1"></div>
+                        <div>신환: ${Math.round(data.new_count / count)}명</div>
+                        <div>90초: ${Math.round(data.ninety_count / count)}명</div>
+                        <div>재진: ${Math.round(data.revisit_count / count)}명</div>
+                        <div>산정X: ${Math.round(data.no_billing_count / count)}명</div>
+                    </div>
+                `;
+                dayAverageContainer.appendChild(avgElement);
+            }
+
+            // 주합계 열에 해당하는 빈 셀 추가
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'p-3';
+            dayAverageContainer.appendChild(emptyCell);
+        }
+
+        // Initial render
+        renderCalendar();
+    });
+</script>

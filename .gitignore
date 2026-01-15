@@ -27,6 +27,9 @@ db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
+static
+# app/static 제외
+!app/static
 
 # Virtual Environment
 .env
@@ -37,7 +40,6 @@ ENV/
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
 
@@ -45,10 +47,26 @@ ENV/
 .DS_Store
 Thumbs.db
 
+# Node
+node_modules/
+package-lock.json
+
 # Project specific
 *.env
 *.env.local
 *.env.*.local
 .env.development.local
 .env.test.local
-.env.production.local 
+.env.production.local
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+# terraform/*.tfvars
+!terraform/*.tfvars.example

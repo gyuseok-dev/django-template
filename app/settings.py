@@ -10,113 +10,174 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from os import environ, path
 from pathlib import Path
-import os
-from dotenv import load_dotenv
 from urllib.parse import urlparse
+
+from django.core.management.utils import get_random_secret_key
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+######################################################################
+# General
+######################################################################
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = environ.get("SECRET_KEY", get_random_secret_key())
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+DEBUG = environ.get("DEBUG") == "1"
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-m!qj9&e%6z7s18o@&t)+t0vq4b9m59yz9z2s*p_8ckg-tw^sgo')
+######################################################################
+# Domains
+######################################################################
+# ALLOWED_HOSTS 설정
+ALLOWED_HOSTS = environ.get("ALLOWED_HOSTS", "localhost").split(",")
+# EC2 내부 IP를 가져와서 ALLOWED_HOSTS에 추가
+import socket
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+try:
+    # socket을 이용한 방법 (가장 빠름)
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    ALLOWED_HOSTS.append(local_ip)
 
-ALLOWED_HOSTS = ['*']  # For development only
+    # 또는 AWS Metadata 서비스를 이용하는 방법 (더 확실함)
+    # EC2 인스턴스 내부에서만 동작합니다.
+    # ec2_ip = requests.get('http://169.254.169.254/latest/meta-data/local-ipv4', timeout=2).text
+    # ALLOWED_HOSTS.append(ec2_ip)
+except Exception:
+    pass
+
+CSRF_TRUSTED_ORIGINS = environ.get(
+    "CSRF_TRUSTED_ORIGINS", "http://localhost:8000"
+).split(",")
+
+# HTTPS 프록시 설정 (AWS ELB/ALB 환경)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# 프로덕션 환경 보안 설정
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
-# Application definition
-
+######################################################################
+# Apps
+######################################################################
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'corsheaders',
-    'user',
+    "unfold",  # django-unfold (admin보다 먼저)
+    "unfold.contrib.filters",  # unfold 필터
+    "unfold.contrib.forms",  # unfold 폼
+    "unfold.contrib.inlines",  # unfold 인라인
+    "unfold.contrib.import_export",  # unfold import-export 통합
+    "crispy_forms",  # django-crispy-forms
+    "core",  # 공통 BaseModel 및 유틸리티
+    "hospital",  # 병원 관련 모델 (Room 등)
+    "record.apps.RecordConfig",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "corsheaders",
+    "import_export",
+    "django_extensions",  # Django Extensions
+    "user",
+    "dashboard",
 ]
 
 MIDDLEWARE = [
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.TenantMiddleware",  # 멀티테넌시 미들웨어
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# Debug Toolbar (개발 환경에서만, 모듈이 설치된 경우에만)
+if DEBUG:
+    try:
+        import debug_toolbar  # noqa: F401
+
+        INSTALLED_APPS.append("debug_toolbar")
+        MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
+        INTERNAL_IPS = [
+            "127.0.0.1",
+        ]
+    except ImportError:
+        pass
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True  # For development only
 
-ROOT_URLCONF = 'app.urls'
+ROOT_URLCONF = "app.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "core.context_processors.hospital_context",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'app.wsgi.application'
+WSGI_APPLICATION = "app.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://postgres:your-password@localhost:5432/postgres')
 
-# Parse DATABASE_URL
+# PostgreSQL만 사용하도록 설정
+DATABASE_URL = environ.get(
+    "DATABASE_URL", "postgresql://postgres:postgres@db:5432/postgres"
+)
 db_url = urlparse(DATABASE_URL)
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': db_url.path[1:],  # 첫 번째 슬래시 제거
-        'USER': db_url.username,
-        'PASSWORD': db_url.password,
-        'HOST': db_url.hostname,
-        'PORT': db_url.port,
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": db_url.path[1:],  # 첫 번째 슬래시 제거
+        "USER": db_url.username,
+        "PASSWORD": db_url.password,
+        "HOST": db_url.hostname,
+        "PORT": db_url.port,
+        # 개발 환경에서는 sslmode 생략 (로컬/테스트)
     }
 }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -124,9 +185,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'ko-kr'
+LANGUAGE_CODE = "ko-kr"
 
-TIME_ZONE = 'Asia/Seoul'
+TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 
@@ -136,12 +197,195 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "app" / "static"]
+STATIC_ROOT = BASE_DIR / "static"
+
+# DEBUG 모드에서는 기본 스토리지, 프로덕션에서는 whitenoise manifest 스토리지 사용
+if DEBUG:
+    STATICFILES_STORAGE = (
+        "django.contrib.staticfiles.storage.StaticFilesStorage"
+    )
+else:
+    STATICFILES_STORAGE = (
+        "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    )
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# 사용자가 업로드한 파일이 실제로 저장되는 서버의 물리적 경로
+MEDIA_ROOT = path.join(BASE_DIR, "media")
 
-AUTH_USER_MODEL = 'user.User'
+# 웹 브라우저에서 파일에 접근할 때 사용하는 URL 주소
+MEDIA_URL = "/media/"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = "user.User"
+
+# Django Unfold 설정
+UNFOLD = {
+    "SITE_TITLE": "병원 ERP",
+    "SITE_HEADER": "병원 ERP",
+    "SHOW_HISTORY": False,
+    "STYLES": [
+        lambda request: static("css/styles.css"),
+    ],
+    "THEME": "light",
+    "COLORS": {
+        "primary": {
+            "50": "239 244 255",
+            "100": "219 234 254",
+            "200": "191 219 254",
+            "300": "147 197 253",
+            "400": "96 165 250",
+            "500": "57 85 180",  # #3955B4
+            "600": "37 99 235",
+            "700": "29 78 216",
+            "800": "30 64 175",
+            "900": "30 58 138",
+            "950": "23 37 84",
+        },
+    },
+    "SIDEBAR": {
+        "navigation": [
+            {
+                "title": _("병원 통계"),
+                "items": [
+                    {
+                        "title": _("최고매출"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy(
+                            "admin:dashboard_bestrevenue_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("업무일지"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy(
+                            "admin:dashboard_calendar_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("병원 현황(일평균)"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy(
+                            "admin:dashboard_evaluate_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("그래프 현황"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy(
+                            "admin:dashboard_graph_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("마감일지"),
+                        "icon": "settings",
+                        "link": reverse_lazy(
+                            "admin:record_manualrecord_changelist"
+                        ),
+                    },
+                ],
+            },
+            {
+                "title": _("병원 관리"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("병원"),
+                        "icon": "local_hospital",
+                        "link": reverse_lazy(
+                            "admin:hospital_hospital_changelist"
+                        ),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
+                        "title": _("진료실"),
+                        "icon": "meeting_room",
+                        "link": reverse_lazy("admin:hospital_room_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                ],
+            },
+            {
+                "title": _("권한"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Users"),
+                        "icon": "account_circle",
+                        "link": reverse_lazy("admin:user_user_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
+                        "title": _("Groups"),
+                        "icon": "group",
+                        "link": reverse_lazy("admin:auth_group_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                ],
+            },
+            {
+                "title": _("업로드데이터"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("진료기록"),
+                        "icon": "account_circle",
+                        "link": reverse_lazy(
+                            "admin:record_patientrecord_changelist"
+                        ),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
+                        "title": _("내원경로"),
+                        "icon": "group",
+                        "link": reverse_lazy(
+                            "admin:record_visitchannelrecord_changelist"
+                        ),
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                ],
+            },
+        ],
+    },
+}
+
+# Django Crispy Forms 설정
+CRISPY_TEMPLATE_PACK = "unfold_crispy"
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["unfold_crispy"]
+
+# Django 캐시 설정 (메모리 캐시)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "hospital-erp-cache",
+        "OPTIONS": {"MAX_ENTRIES": 1000},
+    }
+}
+
+######################################################################
+# Sentry
+######################################################################
+SENTRY_DSN = environ.get("SENTRY_DSN")
+
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+        ],
+        # 성능 모니터링 샘플링 비율 (0.0 ~ 1.0)
+        traces_sample_rate=1.0 if DEBUG else 0.1,
+        # 프로파일링 샘플링 비율 (0.0 ~ 1.0)
+        profiles_sample_rate=1.0 if DEBUG else 0.1,
+        # 환경 설정
+        environment="development" if DEBUG else "production",
+        # 에러 전송 여부
+        send_default_pii=True,
+    )

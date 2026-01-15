@@ -1,0 +1,14 @@
+<table class="w-full border-collapse">
+  <thead>
+    <tr class="border-b-2 border-gray-300">
+      <th class="px-4 py-3 text-center font-semibold bg-neutral-400">전월</th>
+      <th class="px-4 py-3 text-center font-semibold bg-primary-white">당월</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="bg-gray-50">
+      <td class="px-4 py-3 text-center text-neutral-150">{{ prev|floatformat:'0g'|default:'-' }}{{ unit|default:'원' }}</td>
+      <td class="px-4 py-3 text-center font-semibold">{{ curr|floatformat:'0g'|default:'-' }}{{ unit|default:'원' }}</td>
+    </tr>
+  </tbody>
+</table>

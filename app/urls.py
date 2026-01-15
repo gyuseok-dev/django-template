@@ -14,9 +14,38 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from django.views.generic.base import RedirectView
+
+# Admin 사이트 커스터마이징
+admin.site.site_header = "병원 ERP 관리 시스템"
+admin.site.site_title = "병원 ERP"
+admin.site.index_title = "관리자 메뉴"
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # 루트 경로 → admin 리다이렉트
+    path("", RedirectView.as_view(url="/admin/", permanent=False)),
+    # Core views
+    path("core/", include("core.urls")),
+    # Admin 커스텀 뷰 (admin/ 앞에 위치해야 함)
+    path(
+        "admin/",
+        RedirectView.as_view(
+            url="/admin/dashboard/bestrevenue/", permanent=False
+        ),
+    ),
+    path("admin/", admin.site.urls),
+    path("record/", include("record.urls")),
 ]
+
+# Debug Toolbar (개발 환경에서만)
+if settings.DEBUG:
+    urlpatterns += [
+        path("__debug__/", include("debug_toolbar.urls")),
+    ]
+    # 미디어 파일 서빙 (개발 환경에서만)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

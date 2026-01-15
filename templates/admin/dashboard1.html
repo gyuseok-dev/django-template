@@ -1,0 +1,32 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static unfold %}
+
+{% block content %}
+<div class="p-10 max-w-7xl mx-auto">
+    {% component "unfold/components/card.html" with title="■ 일 평균 내원 환자" %}
+        {% component "unfold/components/table.html" with table=table_1 card_included=1 striped=1 %}
+        {% endcomponent %}
+    {% endcomponent %}
+
+    <div class="mt-6"></div>
+
+    {% component "unfold/components/card.html" with title="■ 건당 진료비 / 일매출" %}
+        {% component "unfold/components/table.html" with table=table_2 card_included=1 striped=1 %}
+        {% endcomponent %}
+    {% endcomponent %}
+
+    <div class="mt-6"></div>
+
+    {% component "unfold/components/card.html" with title="■ 연령별 신환" %}
+        {% component "unfold/components/table.html" with table=table_3 card_included=1 striped=1 %}
+        {% endcomponent %}
+    {% endcomponent %}
+
+    <div class="mt-6"></div>
+
+    {% component "unfold/components/card.html" with title="■ 내원 경로" %}
+        {% component "unfold/components/table.html" with table=table_4 card_included=1 striped=1 %}
+        {% endcomponent %}
+    {% endcomponent %}
+</div>
+{% endblock %}

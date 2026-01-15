@@ -1,0 +1,95 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static unfold %}
+
+{% block content %}
+<div class="p-10 max-w-7xl mx-auto">
+    <!-- 헤더 타이틀 -->
+    <div class="mb-6">
+        {% include "admin/components/navi_header_title.html" with title="오픈 정형외과 일평균 요약" %}
+    </div>
+
+    <!-- 날짜 필터 -->
+    <div class="mb-6">
+        {% include "admin/components/date_filter.html" %}
+    </div>
+<div class="flex flex-col gap-y-6">
+    <div class="flex flex-col lg:flex-row gap-6">
+    <div class="flex-1">
+        {% component "unfold/components/card.html" with title="일 평균 내원 환자" %}
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="border-b-2 border-gray-300">
+                        <th class="px-4 py-3 text-left font-semibold text-gray-700"></th>
+                        <th class="px-4 py-3 text-center font-semibold bg-neutral-400">전월</th>
+                        <th class="px-4 py-3 text-center font-semibold bg-primary-white">당월</th>
+                    </tr>
+                </thead>
+                <tbody id="patientTableBody">
+                    <tr class="border-b border-gray-200">
+                        <td class="px-4 py-3 font-medium text-gray-700">신환</td>
+                        <td class="px-4 py-3 text-center text-neutral-150">{{ prev_avg_new }}명</td>
+                        <td class="px-4 py-3 text-center font-semibold">{{ current_avg_new }}명</td>
+                    </tr>
+                    <tr class="border-b border-gray-200">
+                        <td class="px-4 py-3 font-medium text-gray-700">재진</td>
+                        <td class="px-4 py-3 text-center text-neutral-150">{{ prev_avg_revisit }}명</td>
+                        <td class="px-4 py-3 text-center font-semibold">{{ current_avg_revisit }}명</td>
+                    </tr>
+                    <tr class="border-b border-gray-200">
+                        <td class="px-4 py-3 font-medium text-gray-700">90일초진</td>
+                        <td class="px-4 py-3 text-center text-neutral-150">{{ prev_avg_ninety }}명</td>
+                        <td class="px-4 py-3 text-center font-semibold">{{ current_avg_ninety }}명</td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td class="px-4 py-3 font-bold text-gray-800">총합</td>
+                        <td class="px-4 py-3 text-center font-bold text-gray-800">{{ prev_avg_total }}명</td>
+                        <td class="px-4 py-3 text-center font-bold text-primary-mid">{{ current_avg_total }}명</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endcomponent %}
+    </div>
+
+    <div class="flex-1">
+        {% component "unfold/components/card.html" with title="건당 진료비" %}
+            {% component "admin/components/compare_table.html" with prev=prev_fee_per_case curr=current_fee_per_case %}
+            {% endcomponent %}
+        {% endcomponent %}
+    </div>
+
+    <div class="flex-1">
+        {% component "unfold/components/card.html" with title="일매출" %}
+            {% component "admin/components/compare_table.html" with prev=prev_avg_daily_revenue curr=current_avg_daily_revenue %}
+            {% endcomponent %}
+        {% endcomponent %}
+    </div>
+</div>
+
+     <div class="mt-6"></div>
+
+    {% component "unfold/components/card.html" with title="■ 내원 경로" %}
+        {% component "unfold/components/table.html" with table=table_visit card_included=1 striped=1 %}
+        {% endcomponent %}
+    {% endcomponent %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // date_filter 변경 시 페이지 새로고침
+    const monthSelect = document.getElementById('monthSelect');
+    if (monthSelect) {
+        monthSelect.addEventListener('change', function() {
+            if (this.value) {
+                const [year, month] = this.value.split('-');
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('year', year);
+                currentUrl.searchParams.set('month', month);
+                window.location.href = currentUrl.toString();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

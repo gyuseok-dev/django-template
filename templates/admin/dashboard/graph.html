@@ -1,0 +1,48 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static unfold %}
+
+{% block content %}
+<div class="p-10 max-w-full mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">그래프 현황(월별)</h1>
+
+    <!-- 날짜 범위 필터 -->
+    <div class="mb-8">
+        {% include "admin/components/daterange_filter.html" %}
+    </div>
+
+    <!-- 2열 그리드 레이아웃 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 일평균 매출 차트 -->
+        <div>
+            {% component 'unfold/components/card.html' with title='일평균 매출' %}
+                {% component 'unfold/components/chart/line.html' with data=daily_avg_revenue_chart_data component_class="LineChartComponent" %}
+                {% endcomponent %}
+            {% endcomponent %}
+        </div>
+
+        <!-- 총환자수 차트 -->
+        <div>
+            {% component 'unfold/components/card.html' with title='총환자수' %}
+                {% component 'unfold/components/chart/line.html' with data=total_count_chart_data component_class="LineChartComponent" %}
+                {% endcomponent %}
+            {% endcomponent %}
+        </div>
+
+        <!-- 건당진료비 차트 -->
+        <div>
+            {% component 'unfold/components/card.html' with title='건당 진료비' %}
+                {% component 'unfold/components/chart/line.html' with data=revenue_per_case_chart_data component_class="LineChartComponent" %}
+                {% endcomponent %}
+            {% endcomponent %}
+        </div>
+
+        <!-- 환자 유형별 차트 -->
+        <div>
+            {% component 'unfold/components/card.html' with title='환자 유형별 현황' %}
+                {% component 'unfold/components/chart/bar.html' with data=patient_type_chart_data component_class="BarChartComponent" %}
+                {% endcomponent %}
+            {% endcomponent %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,38 +1,41 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
+FROM python:3.12-slim-bullseye
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Set work directory
-WORKDIR /app
+RUN mkdir -p /code
 
-# Install system dependencies and uv
+WORKDIR /code
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -LsSf https://astral.sh/uv/install.sh | sh
+    && rm -rf /var/lib/apt/lists/*
 
-# Add uv to PATH
-ENV PATH="/root/.cargo/bin:$PATH"
+# Install uv
+RUN pip install uv
 
-# Copy dependency files
-COPY pyproject.toml uv.lock ./
+# Copy dependency file
+COPY pyproject.toml /code/
 
-# Install Python dependencies using uv
-RUN uv sync --frozen --no-dev
+# Install Python dependencies (including test dependencies)
+RUN uv pip install --system -r pyproject.toml
+RUN uv pip install --system factory-boy pytest-django pytest-cov faker
 
-# Copy project
-COPY . .
-
-# Expose port
-EXPOSE 8000
+# Copy project files
+COPY . /code
 
 # Collect static files
-RUN uv run python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput
 
-# Run the application
-CMD ["uv", "run", "gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000"] 
+# 스크립트 복사 및 실행 권한 부여
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# 엔트리포인트 설정
+ENTRYPOINT ["/entrypoint.sh"]
+
+EXPOSE 8000
+
+CMD ["gunicorn", "--bind", ":8000", "--workers", "2", "app.wsgi"]

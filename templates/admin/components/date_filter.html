@@ -1,0 +1,81 @@
+{% load icon_tags %}
+<!-- 날짜 필터 컴포넌트 -->
+<div class="inline-flex items-center gap-2 px-2 py-2 rounded-lg bg-neutral-400">
+  <!-- 월 선택 입력 -->
+  <div class="relative flex items-center">
+    <input type="month" id="monthSelect" class="px-3 py-1 text-sm font-semiboldb border-1 border-neutral-300 rounded-lg cursor-pointer bg-neutral-white" style="color-scheme: light;" />
+  </div>
+  <div class="flex gap-0">
+    <!-- 어제날 버튼 -->
+    <button id="prevDayBtn" class="text-sm font-semiboldb bg-neutral-white pl-4 pr-3 py-2 text-gray-600 font-medium rounded-l-sm border-1 border-neutral-300">이전달</button>
+    <!-- 다음날 버튼 -->
+    <button id="nextDayBtn" class="text-sm font-semiboldb bg-neutral-white pl-3 pr-4 py-2  text-gray-600 font-medium border-y-1 border-r-1 border-neutral-300">다음달</button>
+  </div>
+
+  <!-- 이번달 버튼 (초기화) -->
+  <button id="resetBtn" class="flex items-center gap-1 text-sm text-neutral-200 hover:text-neutral-200 font-semiboldb">
+    {% icon 'reset' css_class='w-4 h-4 text-neutral-200' %}
+    <span>이번달</span>
+  </button>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const monthSelect = document.getElementById('monthSelect')
+    const prevDayBtn = document.getElementById('prevDayBtn')
+    const nextDayBtn = document.getElementById('nextDayBtn')
+    const resetBtn = document.getElementById('resetBtn')
+
+    // URL에서 파라미터 가져오기
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlYear = urlParams.get('year')
+    const urlMonth = urlParams.get('month')
+
+    // 현재 날짜 또는 URL 파라미터로 초기화
+    const today = new Date()
+    let currentYear = urlYear ? parseInt(urlYear) : today.getFullYear()
+    let currentMonth = urlMonth ? parseInt(urlMonth) : today.getMonth() + 1
+
+    const currentYearMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}`
+    monthSelect.value = currentYearMonth
+
+    // 월 변경 이벤트
+    monthSelect.addEventListener('change', function () {
+      if (this.value) {
+        const [year, month] = this.value.split('-')
+        window.location.href = `?year=${year}&month=${month}`
+      }
+    })
+
+    // 이전달 버튼
+    prevDayBtn.addEventListener('click', function () {
+      let newMonth = currentMonth - 1
+      let newYear = currentYear
+
+      if (newMonth < 1) {
+        newMonth = 12
+        newYear--
+      }
+
+      window.location.href = `?year=${newYear}&month=${newMonth}`
+    })
+
+    // 다음달 버튼
+    nextDayBtn.addEventListener('click', function () {
+      let newMonth = currentMonth + 1
+      let newYear = currentYear
+
+      if (newMonth > 12) {
+        newMonth = 1
+        newYear++
+      }
+
+      window.location.href = `?year=${newYear}&month=${newMonth}`
+    })
+
+    // 이번달 버튼 (초기화)
+    resetBtn.addEventListener('click', function () {
+      window.location.href = window.location.pathname
+    })
+  })
+</script>

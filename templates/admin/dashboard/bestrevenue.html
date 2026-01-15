@@ -1,0 +1,40 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n static unfold %}
+
+{% block content %}
+  <div class="p-10 max-w-7xl mx-auto">
+    {% component 'unfold/components/card.html' with title='■ 월 최고 수치' %}
+    {% component 'unfold/components/table.html' with table=table_month card_included=1 striped=1 %}
+    {% endcomponent %}
+    {% endcomponent %}
+
+    <div class="mt-6"></div>
+
+    {% component 'unfold/components/card.html' with title='■ 일 최고 수치' %}
+    {% component 'unfold/components/table.html' with table=table_day card_included=1 striped=1 %}
+    {% endcomponent %}
+    {% endcomponent %}
+
+    <div class="mt-6"></div>
+
+    {% component 'unfold/components/card.html' with title='■ 일 최고 수치 (요일별)' %}
+    {% component 'unfold/components/chart/cohort.html' with data=cohort_week %}
+    {% endcomponent %}
+    {% endcomponent %}
+
+    <div class="mt-6"></div>
+
+    {% component 'unfold/components/card.html' with title='■ 최근 12개월 월별 매출' %}
+    {% component 'unfold/components/chart/line.html' with data=monthly_revenue_chart component_class="LineChartComponent" %}
+    {% endcomponent %}
+    {% endcomponent %}
+
+    <div class="mt-6"></div>
+
+    {% component 'unfold/components/card.html' with title='■ 최근 7일 일별 매출' %}
+    {% component 'unfold/components/chart/line.html' with data=daily_revenue_chart component_class="LineChartComponent" %}
+    {% endcomponent %}
+    {% endcomponent %}
+    <div class="mt-6"></div>
+  </div>
+{% endblock %}
