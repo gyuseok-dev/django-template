@@ -30,3 +30,15 @@ variable "subnet_ids" {
   description = "사용할 Subnet ID 목록 (2개 이상)"
   type        = list(string)
 }
+
+variable "acm_certificate_arn" {
+  description = "ACM SSL 인증서 ARN (HTTPS용)"
+  type        = string
+  default     = ""
+}
+
+variable "domain_name" {
+  description = "도메인 이름 (예: test-erp.opndoctor.com)"
+  type        = string
+  default     = ""
+}
