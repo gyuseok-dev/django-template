@@ -61,6 +61,11 @@ CSRF_TRUSTED_ORIGINS = environ.get(
 # HTTPS 프록시 설정 (AWS ELB/ALB 환경)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# 프로덕션 환경 보안 설정
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 
 ######################################################################
 # Apps

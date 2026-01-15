@@ -189,7 +189,7 @@ resource "aws_ecs_task_definition" "app" {
         { name = "DATABASE_URL",      valueFrom = "/hospital-erp/${var.environment}/database-url" }
       ]
       environment = [
-        { name = "DEBUG", value = var.environment == "prod" ? "0" : "1" },
+        { name = "DEBUG", value = var.environment == "0"},
         { name = "ALLOWED_HOSTS" , value = "*" }
       ]
     }
