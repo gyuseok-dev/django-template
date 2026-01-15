@@ -9,3 +9,4 @@ subnet_ids = [
   "subnet-d590749a",
   "subnet-28d6b453"
 ]
+acm_certificate_arn = "arn:aws:acm:ap-northeast-2:554522139279:certificate/0d440dff-e381-4607-98d3-eb6e02737149"
