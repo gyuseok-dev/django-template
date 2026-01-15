@@ -126,15 +126,7 @@ class ManualRecord(BaseModel):
 class RoomRecord(BaseModel):
     """진료실별 급여 정보"""
 
-    hospital = models.ForeignKey(
-        "hospital.Hospital",
-        on_delete=models.CASCADE,
-        related_name="room_records",
-        verbose_name="병원",
-        null=True,
-        blank=True,
-        db_index=True,
-    )
+    # hospital은 room.hospital로 접근 가능하므로 제거
 
     manual_record = models.ForeignKey(
         ManualRecord,
