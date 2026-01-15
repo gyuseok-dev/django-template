@@ -38,12 +38,12 @@ class TenantAdminMixin:
     def formfield_for_foreignkey(self, db_field, request, **kwargs):  # type: ignore[misc]
         """FK 필드에 병원 필터 적용"""
         if db_field.name == "hospital":
-            if not request.user.is_superuser:
+            if not request.user.can_access_all_hospitals():
                 # 일반 사용자는 자신의 병원만 선택 가능
+                # 슈퍼유저 또는 대표 권한은 모든 병원 선택 가능
                 kwargs["queryset"] = request.user.hospitals.filter(
                     is_active=True
                 )
-            # 슈퍼유저는 모든 병원 선택 가능
         elif hasattr(db_field.related_model, "hospital"):
             # 다른 FK도 병원별 필터링
             hospital = get_current_hospital()
@@ -65,7 +65,7 @@ class TenantAdminMixin:
     def has_change_permission(self, request, obj=None):  # type: ignore[misc]
         """변경 권한 체크"""
         if obj and hasattr(obj, "hospital"):
-            if not request.user.is_superuser:
+            if not request.user.is_superuser and not request.user.can_access_all_hospitals():
                 if obj.hospital not in request.user.hospitals.all():
                     return False
         return super().has_change_permission(request, obj)  # type: ignore[misc]
@@ -73,7 +73,7 @@ class TenantAdminMixin:
     def has_delete_permission(self, request, obj=None):  # type: ignore[misc]
         """삭제 권한 체크"""
         if obj and hasattr(obj, "hospital"):
-            if not request.user.is_superuser:
+            if not request.user.is_superuser and not request.user.can_access_all_hospitals():
                 if obj.hospital not in request.user.hospitals.all():
                     return False
         return super().has_delete_permission(request, obj)  # type: ignore[misc]

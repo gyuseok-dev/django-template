@@ -51,7 +51,13 @@ class ManualRecord(BaseModel):
         verbose_name = "마감일지"
         verbose_name_plural = "마감일지"
         ordering = ["-date"]
-        unique_together = [["hospital", "date"]]  # 병원별 날짜 고유
+        constraints = [
+            models.UniqueConstraint(
+                fields=["hospital", "date"],
+                condition=models.Q(deleted_at__isnull=True),
+                name="unique_active_manual_record_per_hospital_date",
+            )
+        ]
 
     def __str__(self):
         return f"{self.date} 마감일지"
