@@ -50,8 +50,13 @@ class ManualRecordForm(forms.ModelForm):
         if not self.instance.pk:
             self.fields["date"].initial = date.today()
 
-        # 활성화된 Room별 모든 필드 동적 생성
-        active_rooms = Room.objects.filter(is_active=True)
+        # 해당 병원의 활성화된 Room만 가져오기
+        if hospital_id:
+            active_rooms = Room.objects.filter(hospital_id=hospital_id, is_active=True)
+        elif self.instance.pk and self.instance.hospital:
+            active_rooms = Room.objects.filter(hospital=self.instance.hospital, is_active=True)
+        else:
+            active_rooms = Room.objects.none()
 
         # 필드 목록 정의
         room_fields = [
@@ -306,7 +311,11 @@ class ManualRecordForm(forms.ModelForm):
 
         def save_room_records():
             """RoomRecord 저장 함수"""
-            active_rooms = Room.objects.filter(is_active=True)
+            # 해당 병원의 활성화된 Room만 저장
+            if instance.hospital:
+                active_rooms = Room.objects.filter(hospital=instance.hospital, is_active=True)
+            else:
+                active_rooms = Room.objects.none()
 
             for room in active_rooms:
                 # 각 필드 값 가져오기
