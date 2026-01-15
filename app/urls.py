@@ -27,6 +27,8 @@ admin.site.site_title = "병원 ERP"
 admin.site.index_title = "관리자 메뉴"
 
 urlpatterns = [
+    # 루트 경로 → admin 리다이렉트
+    path("", RedirectView.as_view(url="/admin/", permanent=False)),
     # Core views
     path("core/", include("core.urls")),
     # Admin 커스텀 뷰 (admin/ 앞에 위치해야 함)
